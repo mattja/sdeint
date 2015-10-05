@@ -26,8 +26,9 @@ These will choose an algorithm for you. Or you can use a specific algorithm dire
 specific algorithms:
 --------------------
 So far have these algorithms as a starting point.
-    ``itoEuler()``: the Euler Maruyama algorithm for Ito equations
-    ``stratHeun()``: the Stratonovich Heun algorithm for Stratonovich equations
+
+| ``itoEuler(f, G, y0, tspan)``: the Euler Maruyama algorithm for Ito equations
+| ``stratHeun(f, G, y0, tspan)``: the Stratonovich Heun algorithm for Stratonovich equations
 
 
 TODO
