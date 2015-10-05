@@ -26,33 +26,55 @@ multivariate normal distribution.
 import numpy as np
 
 
-def deltaW(n, m, delta_t):
-    """pre-generate sequence of Wiener increments for each of m independent
-    Wiener processes W_j(t) j=1..m over n time steps with constant
+def deltaW(N, m, delta_t):
+    """Generate sequence of Wiener increments for each of m independent
+    Wiener processes W_j(t) j=1..m over N time steps with constant
     time step size delta_t.
     
     Returns:
-      array of shape (n, m), where the [k, j] element has the value
+      array of shape (N, m), where the [k, j] element has the value
         W_j((k+1)delta_t) - W_j(k*delta_t)
     """
-    return np.random.normal(0.0, np.sqrt(delta_t), (n, m))
-
-
-def _kprod(A, B):
-    """Kroenecker tensor product of two matrices.
-    If A is m x n matrix and B is p x q then _kprod(A,B) is a mp x nq matrix.
-    """
-    pass
+    return np.random.normal(0.0, np.sqrt(delta_t), (N, m))
 
 
 def _vec(A):
     """Stack columns of matrix A on top of each other to give a long vector.
     If A is m x n matrix then _vec(A) will be mn x 1
     """
+    return A.T.reshape((A.size, 1))
 
 
-def Ikp(h, m, n=5):
-    pass
+def _t(a):
+    """transpose the last two axes of a three axis array"""
+    return a.transpose((0, 2, 1))
+
+
+def _dot(a, b):
+    """ for rank 3 arrays a and b, return \sum_k a_ij^k . b_ik^l (no sum on i)
+    i.e. This is just normal matrix multiplication at each point on first axis
+    """
+    return np.einsum('ijk,ikl->ijl', a, b)
+
+
+def _Aterm(N, h, m, k, dW):
+    sqrt2h = np.sqrt(2.0/h)
+    Xk = np.random.normal(0.0, 1.0, (N, m, 1))
+    Yk = np.random.normal(0.0, 1.0, (N, m, 1))
+    term1 = _dot(Xk, _t(Yk + sqrt2h*dW))
+    term2 = _dot(Yk + sqrt2h*dW, _t(Xk))
+    return (term1 - term2)/k
+
+
+def Ikp(N, h, m, n=5):
+    dW = deltaW(N, m, h)
+    dW = np.expand_dims(dW, -1)
+    A = _Aterm(N, h, m, 1, dW)
+    for k in range(2, n+1):
+        A += _Aterm(N, h, m, k, dW)
+    A = (h/(2.0*np.pi))*A
+    I = 0.5*(_dot(dW, _t(dW)) - np.diag(h*np.ones(m))) + A
+    return I
 
 
 def Jkp(h, m, n=5):
