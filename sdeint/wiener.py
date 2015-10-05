@@ -68,13 +68,13 @@ def _Aterm(N, h, m, k, dW):
 
 def Ikp(N, h, m, n=5):
     dW = deltaW(N, m, h)
-    dW = np.expand_dims(dW, -1)
+    dW = np.expand_dims(dW, -1) # array of shape N x m x 1
     A = _Aterm(N, h, m, 1, dW)
     for k in range(2, n+1):
         A += _Aterm(N, h, m, k, dW)
     A = (h/(2.0*np.pi))*A
     I = 0.5*(_dot(dW, _t(dW)) - np.diag(h*np.ones(m))) + A
-    return I
+    return (dW, A, I)
 
 
 def Jkp(h, m, n=5):
