@@ -35,8 +35,7 @@ def deltaW(n, m, delta_t):
       array of shape (n, m), where the [k, j] element has the value
         W_j((k+1)delta_t) - W_j(k*delta_t)
     """
-    sqrth = np.sqrt(h)
-    return np.random.normal(0.0, sqrth, (n, m))
+    return np.random.normal(0.0, np.sqrt(delta_t), (n, m))
 
 
 def _kprod(A, B):

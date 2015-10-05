@@ -25,8 +25,10 @@ Algorithms implemented so far:
     stratHeun: the Stratonovich Heun algorithm for Stratonovich equations.
 """
 
-import numpy as np
+from __future__ import absolute_import
 from .wiener import deltaW
+import numpy as np
+import numbers
 
 
 class Error(Exception):
