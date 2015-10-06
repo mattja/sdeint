@@ -117,13 +117,21 @@ def Jkpw(N, h, m, n=5):
     """
 
 
+# The code below this point implements the method of Wiktorsson2001.
+
 def _vec(A):
-    """For each time interval j, stack columns of matrix A[j] on top of each
-    other to give a long vector.
-    That is, if A is N x m x n then _vec(A) will be N x mn x 1
+    """
+    Linear operator vec() from Wiktorsson2001 p478
+    Args:
+      A: a rank 3 array of shape N x m x n, giving a matrix A[j] for each 
+      interval of time j in 0..N-1
+    Returns:
+      array of shape N x mn x 1, made by stacking the columns of matrix A[j] on
+      top of each other, for each j in 0..N-1
     """
     N, m, n = A.shape
     return A.reshape((N, m*n, 1), order='F')
+
 
 def _kp(a, b):
     """Special case Kronecker tensor product of a[i] and b[i] at each 
@@ -135,6 +143,18 @@ def _kp(a, b):
     N = a.shape[0]
     # take the outer product over the last two axes, then reshape:
     return np.einsum('ijk,ilk->ijkl', a, b).reshape(N, -1, 1)
+
+
+def _kp2(A, B):
+    """Special case Kronecker tensor product of A[i] and B[i] at each 
+    time interval i for i = 0 .. N-1
+    It is specialized for the case where both A and B are rank 3.
+    """
+    N = A.shape[0]
+    if B.shape[0] != N:
+        raise(ValueError)
+    newshape1 = A.shape[1]*B.shape[1]
+    return np.einsum('ijk,ilm->ijlkm', A, B).reshape(N, newshape1, -1)
 
 
 def _P(m):
@@ -161,6 +181,29 @@ def _K(m):
     return K
 
 
+def _Atilde(N, h, m, k, dW, Km0, Pm0):
+    """kth term in the sum for area integral (Wiktorsson2001, p481, 1st eqn)"""
+    M = m*(m-1)/2
+    Xk = np.random.normal(0.0, 1.0, (N, m, 1))
+    Yk = np.random.normal(0.0, 1.0, (N, m, 1))
+    factor1 = np.dot(Km0, Pm0 - np.eye(m**2))
+    factor1 = np.broadcast_to(factor1, (N, M, m**2))
+    factor2 = _kp(Yk + np.sqrt(2.0/h)*dW, Xk)
+    return _dot(factor1, factor2)/k
+
+
+def _sigmainf(N, h, m, dW, Km0, Pm0):
+    """Asymptotic covariance matrix \Sigma_\infty  Wiktorsson2001 eqn (4.5)"""
+    M = m*(m-1)/2
+    Im = np.broadcast_to(np.eye(m), (N, m, m))
+    IM = np.broadcast_to(np.eye(M), (N, M, M))
+    Ims0 = np.eye(m**2)
+    factor1 = np.broadcast_to((2/h)*np.dot(Km0, Ims0 - Pm0), (N, M, m**2))
+    factor2 = _kp2(Im, _dot(dW, _t(dW)))
+    factor3 = np.broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
+    return 2*IM + _dot(_dot(factor1, factor2), factor3)
+
+
 def Iwiktorsson(N, h, m, n=5):
     dW = deltaW(N, m, h)
     dW = np.expand_dims(dW, -1) # array of shape N x m x 1
@@ -168,6 +211,18 @@ def Iwiktorsson(N, h, m, n=5):
         return (dW, np.zeros((N, 1, 1)), (dW*dW - h)/2.0)
     Pm0 = _P(m)
     Km0 = _K(m)
+    M = m*(m-1)/2
+    A = _Atilde(N, h, m, 1, dW, Km0, Pm0)
+    for k in range(2, n+1):
+        A += _Atilde(N, h, m, k, dW, Km0, Pm0)
+    A = (h/(2.0*np.pi))*A
+    S = _sigmainf(N, h, m, dW, Km0, Pm0)
+    normdW2 = np.sum(np.abs(dW)**2, axis=1)
+    radical = np.sqrt(1.0 + normdW2/h).reshape((N, 1, 1))
+    IM = np.broadcast_to(np.eye(M), (N, M, M))
+    sqrtS = (S + 2.0*radical*IM)/(np.sqrt(2.0)*(1.0 + radical))
+    G = np.random.normal(0.0, 1.0, (N, M, 1))
+    tailsum = A
 
     return (dW, A, I)
 

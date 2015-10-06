@@ -3,7 +3,7 @@
 
 import pytest
 import numpy as np
-from sdeint.wiener import _t, _dot, Ikpw, _kp, _P, _K
+from sdeint.wiener import _t, _dot, Ikpw, _kp, _kp2, _P, _K
 
 s = np.random.randint(2**32)
 print('Testing using random seed %d' % s)
@@ -33,6 +33,22 @@ def test_kp():
     XkY = _kp(X, Y)
     for n in range(0, N):
         assert(np.allclose(np.kron(X[n,:,0], Y[n,:,0]), XkY[n,:,0]))
+
+
+def test_kp2():
+    """Test special case Kronecker tensor product function _kp2() by 
+    comparing it against the built-in numpy function np.kron()
+    """
+    for i in range(1, 10, 2):
+        for j in range(1, 20, 3):
+            for k in range(1, 50, 10):
+                for l in range(1, 40, 7):
+                    A = np.random.normal(0.0, 1.0, (10, i, j))
+                    B = np.random.normal(0.0, 1.0, (10, k, l))
+                    AkB = _kp2(A, B)
+                    for n in range(0, 10):
+                        assert(np.allclose(np.kron(A[n,:,:], B[n,:,:]),
+                               AkB[n,:,:]))
 
 
 def test_P():
