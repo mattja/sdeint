@@ -26,7 +26,7 @@ References:
   P. Kloeden, E. Platen and I. Wright (1992) The approximation of multiple
     stochastic integrals
   M. Wiktorsson (2001) Joint Characteristic Function and Simultaneous
-    Simulation of Iterated Itô Integrals for Multiple Independent Brownian
+    Simulation of Iterated Ito Integrals for Multiple Independent Brownian
     Motions
 """
 
@@ -43,13 +43,6 @@ def deltaW(N, m, delta_t):
         W_j((k+1)delta_t) - W_j(k*delta_t)
     """
     return np.random.normal(0.0, np.sqrt(delta_t), (N, m))
-
-
-def _vec(A):
-    """Stack columns of matrix A on top of each other to give a long vector.
-    If A is m x n matrix then _vec(A) will be mn x 1
-    """
-    return A.T.reshape((A.size, 1))
 
 
 def _t(a):
@@ -103,7 +96,61 @@ def Ikpw(N, h, m, n=5):
     return (dW, A, I)
 
 
+def _vec(A):
+    """For each time interval j, stack columns of matrix A[j] on top of each
+    other to give a long vector.
+    That is, if A is N x m x n then _vec(A) will be N x mn x 1
+    """
+    N, m, n = A.shape
+    return A.reshape((N, m*n, 1), order='F')
+
+def _kp(a, b):
+    """Special case Kronecker tensor product of a[i] and b[i] at each 
+    time interval i for i = 0 .. N-1
+    It is specialized for the case where both a and b are shape N x m x 1 
+    """
+    if a.shape != b.shape or a.shape[-1] != 1:
+        raise(ValueError)
+    N = a.shape[0]
+    # take the outer product over the last two axes, then reshape:
+    return np.einsum('ijk,ilk->ijkl', a, b).reshape(N, -1, 1)
+
+
+def _P(m):
+    """Returns m^2 x m^2 permutation matrix that swaps rows i and j where
+    j = 1 + m((i - 1) mod m) + (i - 1) div m, for i = 1 .. m^2
+    """
+    P = np.zeros((m**2,m**2), dtype=np.int64)
+    for i in range(1, m**2 + 1):
+        j = 1 + m*((i - 1) % m) + (i - 1)//m
+        P[i-1, j-1] = 1
+    return P
+
+
+def _K(m):
+
+    pass
+
+
 def Jkpw(h, m, n=5):
+    """
+    matrix J approximating repeated Ito integrals at each of N time intervals,
+    based on the method of Kloeden, Platen and Wright (1992).
+
+    Args:
+      N (int): the number of time intervals
+      h (float): the time step size
+      m (int): the number of independent Wiener processes
+      n (int, optional): how many terms to take in the series expansion
+
+    Returns:
+      (dW, A, J) where
+        J: array of shape (N, m, m) giving our approximation of the m x m 
+          matrix of repeated Ito integrals for each of N time intervals.
+        A: array of shape (N, m, m) giving the Levy areas that were used.
+        dW: array of shape (N, m, 1) giving the m Wiener increments at each
+          time interval.
+    """
     pass
 
 
