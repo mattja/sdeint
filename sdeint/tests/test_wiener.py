@@ -3,7 +3,7 @@
 
 import pytest
 import numpy as np
-from sdeint.wiener import _t, _dot, Ikpw, _kp, _kp2, _P, _K
+from sdeint.wiener import _t, _dot, Ikpw, _kp, _kp2, _P, _K, _a
 
 s = np.random.randint(2**32)
 print('Testing using random seed %d' % s)
@@ -27,7 +27,7 @@ def test_Ikpw_identities():
 
 
 def test_kp():
-    """Test our special case Kronecker tensor product function _kp() by 
+    """Test our special case Kronecker tensor product function _kp() by
     comparing it against the built-in numpy function np.kron()
     """
     XkY = _kp(X, Y)
@@ -36,7 +36,7 @@ def test_kp():
 
 
 def test_kp2():
-    """Test special case Kronecker tensor product function _kp2() by 
+    """Test special case Kronecker tensor product function _kp2() by
     comparing it against the built-in numpy function np.kron()
     """
     for i in range(1, 10, 2):
@@ -59,7 +59,7 @@ def test_P():
     assert(np.allclose(np.dot(Pm0, Pm0), np.eye(m**2))) # is its own inverse
     Pm = np.broadcast_to(Pm0, (N, m**2, m**2))
     for n in range(0, N):
-        assert(np.dot(Pm0, np.kron(X[n,:,0], Y[n,:,0])), 
+        assert(np.dot(Pm0, np.kron(X[n,:,0], Y[n,:,0])),
                np.kron(Y[n,:,0], X[n,:,0]))
     # next line is equivalent to the previous 3 lines:
     assert(_dot(Pm, _kp(X, Y)), _kp(Y, X))
@@ -81,3 +81,7 @@ def test_K():
       assert(np.allclose(K0.dot(P0).dot(K0.T), np.zeros((M, M))))
       assert(np.allclose(K0.dot(Iq2).dot(K0.T), IM))
       assert(np.allclose((Iq2 - P0).dot(K0.T).dot(K0).dot(Iq2 - P0), Iq2 - P0))
+
+
+def test_a():
+    assert(np.abs(_a(5) - 0.181322955737115) < 1e-15)

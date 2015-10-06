@@ -80,7 +80,7 @@ def Ikpw(N, h, m, n=5):
 
     Returns:
       (dW, A, I) where
-        I: array of shape (N, m, m) giving our approximation of the m x m 
+        I: array of shape (N, m, m) giving our approximation of the m x m
           matrix of repeated Ito integrals for each of N time intervals.
         A: array of shape (N, m, m) giving the Levy areas that were used.
         dW: array of shape (N, m, 1) giving the m Wiener increments at each
@@ -109,7 +109,7 @@ def Jkpw(N, h, m, n=5):
 
     Returns:
       (dW, A, J) where
-        J: array of shape (N, m, m) giving our approximation of the m x m 
+        J: array of shape (N, m, m) giving our approximation of the m x m
           matrix of repeated Ito integrals for each of N time intervals.
         A: array of shape (N, m, m) giving the Levy areas that were used.
         dW: array of shape (N, m, 1) giving the m Wiener increments at each
@@ -123,7 +123,7 @@ def _vec(A):
     """
     Linear operator vec() from Wiktorsson2001 p478
     Args:
-      A: a rank 3 array of shape N x m x n, giving a matrix A[j] for each 
+      A: a rank 3 array of shape N x m x n, giving a matrix A[j] for each
       interval of time j in 0..N-1
     Returns:
       array of shape N x mn x 1, made by stacking the columns of matrix A[j] on
@@ -134,9 +134,9 @@ def _vec(A):
 
 
 def _kp(a, b):
-    """Special case Kronecker tensor product of a[i] and b[i] at each 
+    """Special case Kronecker tensor product of a[i] and b[i] at each
     time interval i for i = 0 .. N-1
-    It is specialized for the case where both a and b are shape N x m x 1 
+    It is specialized for the case where both a and b are shape N x m x 1
     """
     if a.shape != b.shape or a.shape[-1] != 1:
         raise(ValueError)
@@ -146,7 +146,7 @@ def _kp(a, b):
 
 
 def _kp2(A, B):
-    """Special case Kronecker tensor product of A[i] and B[i] at each 
+    """Special case Kronecker tensor product of A[i] and B[i] at each
     time interval i for i = 0 .. N-1
     It is specialized for the case where both A and B are rank 3.
     """
@@ -202,6 +202,11 @@ def _sigmainf(N, h, m, dW, Km0, Pm0):
     factor2 = _kp2(Im, _dot(dW, _t(dW)))
     factor3 = np.broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
     return 2*IM + _dot(_dot(factor1, factor2), factor3)
+
+
+def _a(n):
+    """ \sum_{n+1}^\infty 1/k^2 """
+    return np.pi**2/6.0 - sum(1.0/k**2 for k in range(1, n+1))
 
 
 def Iwiktorsson(N, h, m, n=5):
