@@ -3,7 +3,7 @@
 
 import pytest
 import numpy as np
-from sdeint.wiener import _t, _dot, Ikpw, _kp, _P
+from sdeint.wiener import _t, _dot, Ikpw, _kp, _P, _K
 
 s = np.random.randint(2**32)
 print('Testing using random seed %d' % s)
@@ -47,3 +47,21 @@ def test_P():
                np.kron(Y[n,:,0], X[n,:,0]))
     # next line is equivalent to the previous 3 lines:
     assert(_dot(Pm, _kp(X, Y)), _kp(Y, X))
+
+
+def test_K():
+    """Test matrix _K(m) against relations in Wiktorsson2001 equation (4.3)"""
+    for q in range(2, 10):
+      P0 = _P(q)
+      K0 = _K(q)
+      M = q*(q-1)/2
+      Iq2 = np.eye(q**2)
+      IM = np.eye(M)
+      assert(np.allclose(np.dot(K0, K0.T), IM))
+      d = []
+      for k in range(1, q+1):
+          d.extend([0]*k + [1]*(q-k))
+      assert(np.allclose(np.dot(K0.T, K0), np.diag(d)))
+      assert(np.allclose(K0.dot(P0).dot(K0.T), np.zeros((M, M))))
+      assert(np.allclose(K0.dot(Iq2).dot(K0.T), IM))
+      assert(np.allclose((Iq2 - P0).dot(K0.T).dot(K0).dot(Iq2 - P0), Iq2 - P0))

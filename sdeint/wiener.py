@@ -96,6 +96,27 @@ def Ikpw(N, h, m, n=5):
     return (dW, A, I)
 
 
+def Jkpw(N, h, m, n=5):
+    """
+    matrix J approximating repeated Ito integrals at each of N time intervals,
+    based on the method of Kloeden, Platen and Wright (1992).
+
+    Args:
+      N (int): the number of time intervals
+      h (float): the time step size
+      m (int): the number of independent Wiener processes
+      n (int, optional): how many terms to take in the series expansion
+
+    Returns:
+      (dW, A, J) where
+        J: array of shape (N, m, m) giving our approximation of the m x m 
+          matrix of repeated Ito integrals for each of N time intervals.
+        A: array of shape (N, m, m) giving the Levy areas that were used.
+        dW: array of shape (N, m, 1) giving the m Wiener increments at each
+          time interval.
+    """
+
+
 def _vec(A):
     """For each time interval j, stack columns of matrix A[j] on top of each
     other to give a long vector.
@@ -128,35 +149,28 @@ def _P(m):
 
 
 def _K(m):
-
-    pass
-
-
-def Jkpw(h, m, n=5):
-    """
-    matrix J approximating repeated Ito integrals at each of N time intervals,
-    based on the method of Kloeden, Platen and Wright (1992).
-
-    Args:
-      N (int): the number of time intervals
-      h (float): the time step size
-      m (int): the number of independent Wiener processes
-      n (int, optional): how many terms to take in the series expansion
-
-    Returns:
-      (dW, A, J) where
-        J: array of shape (N, m, m) giving our approximation of the m x m 
-          matrix of repeated Ito integrals for each of N time intervals.
-        A: array of shape (N, m, m) giving the Levy areas that were used.
-        dW: array of shape (N, m, 1) giving the m Wiener increments at each
-          time interval.
-    """
-    pass
+    """ matrix K_m from Wiktorsson2001 """
+    M = m*(m - 1)/2
+    K = np.zeros((M, m**2), dtype=np.int64)
+    row = 0
+    for j in range(1, m):
+        col = (j - 1)*m + j
+        s = m - j
+        K[row:(row+s), col:(col+s)] = np.eye(s)
+        row += s
+    return K
 
 
-def Iwiktorsson(h, m, n=5):
-    pass
+def Iwiktorsson(N, h, m, n=5):
+    dW = deltaW(N, m, h)
+    dW = np.expand_dims(dW, -1) # array of shape N x m x 1
+    if m == 1:
+        return (dW, np.zeros((N, 1, 1)), (dW*dW - h)/2.0)
+    Pm0 = _P(m)
+    Km0 = _K(m)
+
+    return (dW, A, I)
 
 
-def Jwiktorsson(h, m, n=5):
+def Jwiktorsson(N, h, m, n=5):
     pass
