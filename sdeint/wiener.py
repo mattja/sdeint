@@ -21,6 +21,13 @@ Brownian bridge process. By default using n=5.
 Finally we implement the method of Wiktorsson (2001) which improves on the
 previous method by also approximating the tail-sum distribution by a
 multivariate normal distribution.
+
+References:
+  P. Kloeden, E. Platen and I. Wright (1992) The approximation of multiple
+    stochastic integrals
+  M. Wiktorsson (2001) Joint Characteristic Function and Simultaneous
+    Simulation of Iterated Itô Integrals for Multiple Independent Brownian
+    Motions
 """
 
 import numpy as np
@@ -58,6 +65,7 @@ def _dot(a, b):
 
 
 def _Aterm(N, h, m, k, dW):
+    """kth term in the sum of Wiktorsson2001 equation (2.2)"""
     sqrt2h = np.sqrt(2.0/h)
     Xk = np.random.normal(0.0, 1.0, (N, m, 1))
     Yk = np.random.normal(0.0, 1.0, (N, m, 1))
@@ -66,7 +74,25 @@ def _Aterm(N, h, m, k, dW):
     return (term1 - term2)/k
 
 
-def Ikp(N, h, m, n=5):
+def Ikpw(N, h, m, n=5):
+    """
+    matrix I approximating repeated Ito integrals at each of N time intervals,
+    based on the method of Kloeden, Platen and Wright (1992).
+
+    Args:
+      N (int): the number of time intervals
+      h (float): the time step size
+      m (int): the number of independent Wiener processes
+      n (int, optional): how many terms to take in the series expansion
+
+    Returns:
+      (dW, A, I) where
+        I: array of shape (N, m, m) giving our approximation of the m x m 
+          matrix of repeated Ito integrals for each of N time intervals.
+        A: array of shape (N, m, m) giving the Levy areas that were used.
+        dW: array of shape (N, m, 1) giving the m Wiener increments at each
+          time interval.
+    """
     dW = deltaW(N, m, h)
     dW = np.expand_dims(dW, -1) # array of shape N x m x 1
     A = _Aterm(N, h, m, 1, dW)
@@ -77,7 +103,7 @@ def Ikp(N, h, m, n=5):
     return (dW, A, I)
 
 
-def Jkp(h, m, n=5):
+def Jkpw(h, m, n=5):
     pass
 
 

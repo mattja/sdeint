@@ -5,7 +5,7 @@ sdeint
 
 Overview
 --------
-sdeint is a collection of numerical algorithms for integrating Ito and Stratonovich stochastic ordinary differential equations (SODEs). It has simple functions that can be used similarly to ``scipy.integrate.odeint()`` or MATLAB's ``ode45``.
+sdeint is a collection of numerical algorithms for integrating Ito and Stratonovich stochastic ordinary differential equations (SODEs). It has simple functions that can be used in a similar way to ``scipy.integrate.odeint()`` or MATLAB's ``ode45``.
 
 There already exist some python and MATLAB packages providing Euler-Maruyama and Milstein algorithms, and a couple of others. So why am I bothering to make another package?  
 
@@ -29,6 +29,11 @@ So far have these algorithms as a starting point.
 
 | ``itoEuler(f, G, y0, tspan)``: the Euler Maruyama algorithm for Ito equations
 | ``stratHeun(f, G, y0, tspan)``: the Stratonovich Heun algorithm for Stratonovich equations
+
+Repeated integrals by the method of Kloeden, Platen and Wright (1992):
+
+| ``Ikpw(N, h, m, n=5)`` Approximate repeated Ito integrals
+| ``Jkpw(N, h, m, n=5)`` Approximate repeated Stratonovich integrals
 
 
 TODO
