@@ -3,7 +3,7 @@
 
 import pytest
 import numpy as np
-from sdeint.wiener import _t, _dot, Ikpw, _kp, _kp2, _P, _K, _a
+from sdeint.wiener import _t, _dot, Ikpw, _vec, _unvec, _kp, _kp2, _P, _K, _a
 
 s = np.random.randint(2**32)
 print('Testing using random seed %d' % s)
@@ -24,6 +24,13 @@ def test_Ikpw_identities():
     assert(np.allclose(I + _t(I), _dot(dW, _t(dW)) - h*NIm))
     assert(np.allclose(A, -_t(A)))
     assert(np.allclose(2*(I - A), _dot(dW, _t(dW)) - h*NIm))
+
+
+def test_vec_unvec():
+    A = np.arange(10*3*3).reshape((10, 3, 3))
+    vecA = _vec(A)
+    assert(vecA.shape == (10, 9, 1))
+    assert(np.allclose(_unvec(vecA) - A, np.zeros((10, 3, 3))))
 
 
 def test_kp():
@@ -85,3 +92,12 @@ def test_K():
 
 def test_a():
     assert(np.abs(_a(5) - 0.181322955737115) < 1e-15)
+
+
+def test_Iwik_identities():
+    """Test the relations given in Wiktorsson2001 equation (2.1)"""
+    dW, A, I = Ikpw(N, h, m)
+    NIm = np.broadcast_to(np.eye(m), (N, m, m))
+    assert(np.allclose(I + _t(I), _dot(dW, _t(dW)) - h*NIm))
+    assert(np.allclose(A, -_t(A)))
+    assert(np.allclose(2*(I - A), _dot(dW, _t(dW)) - h*NIm))

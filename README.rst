@@ -35,6 +35,10 @@ Repeated integrals by the method of Kloeden, Platen and Wright (1992):
 | ``Ikpw(N, h, m, n=5)`` Approximate repeated Ito integrals
 | ``Jkpw(N, h, m, n=5)`` Approximate repeated Stratonovich integrals
 
+Repeated integrals by the method of Wiktorsson (2001):
+
+| ``Iwik(N, h, m, n=5)`` Approximate repeated Ito integrals
+| ``Jwik(N, h, m, n=5)`` Approximate repeated Stratonovich integrals
 
 TODO
 ----

@@ -67,7 +67,7 @@ def _Aterm(N, h, m, k, dW):
     return (term1 - term2)/k
 
 
-def Ikpw(N, h, m, n=5):
+def Ikpw(N, h, m, n=5, dW=None):
     """
     matrix I approximating repeated Ito integrals at each of N time intervals,
     based on the method of Kloeden, Platen and Wright (1992).
@@ -77,6 +77,9 @@ def Ikpw(N, h, m, n=5):
       h (float): the time step size
       m (int): the number of independent Wiener processes
       n (int, optional): how many terms to take in the series expansion
+      dW (array of shape (N, m, 1), optional): If you would like to supply a 
+        specific sequence of Wiener increments then provide them here. (By
+        default they will be generated randomly.)
 
     Returns:
       (dW, A, I) where
@@ -86,14 +89,19 @@ def Ikpw(N, h, m, n=5):
         dW: array of shape (N, m, 1) giving the m Wiener increments at each
           time interval.
     """
-    dW = deltaW(N, m, h)
-    dW = np.expand_dims(dW, -1) # array of shape N x m x 1
+    if dW is None:
+        dW = deltaW(N, m, h).reshape((N, m, 1))
+    else:
+        if dW.ndim == 2:
+            dW = dW.reshape((N, -1, 1))
+        if dW.shape[0] != N or dW.shape[1] != m or dW.shape[2] != 1:
+            raise(ValueError)
     A = _Aterm(N, h, m, 1, dW)
     for k in range(2, n+1):
         A += _Aterm(N, h, m, k, dW)
     A = (h/(2.0*np.pi))*A
     I = 0.5*(_dot(dW, _t(dW)) - np.diag(h*np.ones(m))) + A
-    return (dW, A, I)
+    return (dW[:,:,0], A, I)
 
 
 def Jkpw(N, h, m, n=5):
@@ -121,7 +129,7 @@ def Jkpw(N, h, m, n=5):
 
 def _vec(A):
     """
-    Linear operator vec() from Wiktorsson2001 p478
+    Linear operator _vec() from Wiktorsson2001 p478
     Args:
       A: a rank 3 array of shape N x m x n, giving a matrix A[j] for each
       interval of time j in 0..N-1
@@ -131,6 +139,14 @@ def _vec(A):
     """
     N, m, n = A.shape
     return A.reshape((N, m*n, 1), order='F')
+
+
+def _unvec(vecA, m=None):
+    """inverse of _vec() operator"""
+    N = vecA.shape[0]
+    if m is None:
+        m = np.sqrt(vecA.shape[1] + 0.25).astype(np.int64)
+    return vecA.reshape((N, m, -1), order='F')
 
 
 def _kp(a, b):
@@ -148,7 +164,7 @@ def _kp(a, b):
 def _kp2(A, B):
     """Special case Kronecker tensor product of A[i] and B[i] at each
     time interval i for i = 0 .. N-1
-    It is specialized for the case where both A and B are rank 3.
+    Specialized for the case A and B rank 3 with A.shape[0]==B.shape[0]
     """
     N = A.shape[0]
     if B.shape[0] != N:
@@ -198,7 +214,7 @@ def _sigmainf(N, h, m, dW, Km0, Pm0):
     Im = np.broadcast_to(np.eye(m), (N, m, m))
     IM = np.broadcast_to(np.eye(M), (N, M, M))
     Ims0 = np.eye(m**2)
-    factor1 = np.broadcast_to((2/h)*np.dot(Km0, Ims0 - Pm0), (N, M, m**2))
+    factor1 = np.broadcast_to((2.0/h)*np.dot(Km0, Ims0 - Pm0), (N, M, m**2))
     factor2 = _kp2(Im, _dot(dW, _t(dW)))
     factor3 = np.broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
     return 2*IM + _dot(_dot(factor1, factor2), factor3)
@@ -209,9 +225,35 @@ def _a(n):
     return np.pi**2/6.0 - sum(1.0/k**2 for k in range(1, n+1))
 
 
-def Iwiktorsson(N, h, m, n=5):
-    dW = deltaW(N, m, h)
-    dW = np.expand_dims(dW, -1) # array of shape N x m x 1
+def Iwik(N, h, m, n=5, dW=None):
+    """
+    matrix I approximating repeated Ito integrals at each of N time intervals,
+    using the method of Wiktorsson (2001).
+
+    Args:
+      N (int): the number of time intervals
+      h (float): the time step size
+      m (int): the number of independent Wiener processes
+      n (int, optional): how many terms to take in the series expansion
+      dW (array of shape (N, m, 1), optional): If you would like to supply a 
+        specific sequence of Wiener increments then provide them here. (By
+        default they will be generated randomly.)
+
+    Returns:
+      (dW, A, I) where
+        I: array of shape (N, m, m) giving our approximation of the m x m
+          matrix of repeated Ito integrals for each of N time intervals.
+        A: array of shape (N, m, m) giving the Levy areas that were used.
+        dW: array of shape (N, m) giving the m Wiener increments at each
+          time interval.
+    """
+    if dW is None:
+        dW = deltaW(N, m, h).reshape((N, m, 1))
+    else:
+        if dW.ndim == 2:
+            dW = dW.reshape((N, -1, 1))
+        if dW.shape[0] != N or dW.shape[1] != m or dW.shape[2] != 1:
+            raise(ValueError)
     if m == 1:
         return (dW, np.zeros((N, 1, 1)), (dW*dW - h)/2.0)
     Pm0 = _P(m)
@@ -225,12 +267,17 @@ def Iwiktorsson(N, h, m, n=5):
     normdW2 = np.sum(np.abs(dW)**2, axis=1)
     radical = np.sqrt(1.0 + normdW2/h).reshape((N, 1, 1))
     IM = np.broadcast_to(np.eye(M), (N, M, M))
+    Im = np.broadcast_to(np.eye(m), (N, m, m))
+    Ims0 = np.eye(m**2)
     sqrtS = (S + 2.0*radical*IM)/(np.sqrt(2.0)*(1.0 + radical))
     G = np.random.normal(0.0, 1.0, (N, M, 1))
-    tailsum = A
+    tailsum = h/(2.0*np.pi)*_a(n)**0.5*_dot(sqrtS, G)
+    Adash = A + tailsum # our estimate of the area integrals
+    factor3 = np.broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
+    vecI = 0.5*(_kp(dW, dW) - _vec(h*Im)) + _dot(factor3, Adash)
+    I = _unvec(vecI)
+    return (dW[:,:,0], Adash, I)
 
-    return (dW, A, I)
 
-
-def Jwiktorsson(N, h, m, n=5):
+def Jwik(N, h, m, n=5):
     pass
