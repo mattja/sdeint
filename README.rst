@@ -30,15 +30,17 @@ So far have these algorithms as a starting point.
 | ``itoEuler(f, G, y0, tspan)``: the Euler Maruyama algorithm for Ito equations
 | ``stratHeun(f, G, y0, tspan)``: the Stratonovich Heun algorithm for Stratonovich equations
 
+| ``deltaW(N, m, h)`` Generate increments of m independent Wiener processes for each of N time intervals of length h
+
 Repeated integrals by the method of Kloeden, Platen and Wright (1992):
 
-| ``Ikpw(N, h, m, n=5)`` Approximate repeated Ito integrals
-| ``Jkpw(N, h, m, n=5)`` Approximate repeated Stratonovich integrals
+| ``Ikpw(dW, h, n=5)`` Approximate repeated Ito integrals
+| ``Jkpw(dW, h, n=5)`` Approximate repeated Stratonovich integrals
 
 Repeated integrals by the method of Wiktorsson (2001):
 
-| ``Iwik(N, h, m, n=5)`` Approximate repeated Ito integrals
-| ``Jwik(N, h, m, n=5)`` Approximate repeated Stratonovich integrals
+| ``Iwik(dW, h, n=5)`` Approximate repeated Ito integrals
+| ``Jwik(dW, h, n=5)`` Approximate repeated Stratonovich integrals
 
 TODO
 ----
