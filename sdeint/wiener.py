@@ -227,7 +227,7 @@ def Iwik(dW, h, n=5):
 
     Returns:
       (A, I) where
-        A: array of shape (N, m, m) giving the Levy areas that were used.
+        A: array of shape (N, m(m-1)/2, m) giving the Levy areas that were used
         I: array of shape (N, m, m) giving an m x m matrix of repeated Ito 
           integral values for each of the N time intervals.
     """

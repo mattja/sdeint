@@ -15,14 +15,15 @@ Usage:
 
     y0 is the initial value
     tspan is an array of time values (currently these must be equally spaced)
-    f is the deterministic part of the system (can be a scalar or  dx1  vector)
-    G is the stochastic part of the system (can be a scalar or  d x m matrix)
+    function f is the deterministic part of the system (scalar or  dx1  vector)
+    function G is the stochastic part of the system (scalar or  d x m matrix)
 
 sdeint will choose an algorithm for you. Or you can choose one explicitly:
 
-Algorithms implemented so far:
     itoEuler: the Euler Maruyama algorithm for Ito equations.
     stratHeun: the Stratonovich Heun algorithm for Stratonovich equations.
+    itoSRI2: the Roessler 2010 order 1.0 strong Stochastic Runge-Kutta
+      algorithm SRI2 for Ito equations
 """
 
 from __future__ import absolute_import
@@ -216,7 +217,7 @@ def stratHeun(f, G, y0, tspan):
 
 
 def itoSRI2(f, G, y0, tspan, Imethod=Iwik):
-    """Use the Rößler2010 order 1.0 strong Stochastic Runge-Kutta algorithm
+    """Use the Roessler2010 order 1.0 strong Stochastic Runge-Kutta algorithm
     SRI2 to integrate an Ito equation dy = f(y,t)dt + G(y,t)dW(t)
 
     where y is d-dimensional vector variable, f is a vector-valued function,
@@ -263,7 +264,7 @@ def itoSRI2(f, G, y0, tspan, Imethod=Iwik):
       SDEValueError
 
     See also:
-      A. Rößler (2010) Runge-Kutta Methods for the Strong Approximation of
+      A. Roessler (2010) Runge-Kutta Methods for the Strong Approximation of
         Solutions of Stochastic Differential Equations
     """
     (d, m, f, G, y0, tspan) = _check_args(f, G, y0, tspan)

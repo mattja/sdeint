@@ -9,7 +9,7 @@ sdeint is a collection of numerical algorithms for integrating Ito and Stratonov
 
 There already exist some python and MATLAB packages providing Euler-Maruyama and Milstein algorithms, and a couple of others. So why am I bothering to make another package?  
 
-It is because there has been 25 years of further research with better methods but for some reason I can't find any open source reference implementations. Not even for those higher order methods published by Kloeden and Platen way back in 1992. So I will aim to put some improved methods here.
+It is because there has been 25 years of further research with better methods but for some reason I can't find any open source reference implementations. Not even for those methods published by Kloeden and Platen way back in 1992. So I will aim to put some improved methods here.
 
 This is prototype code in python, so not aiming for speed. Later can always rewrite these with loops in C when speed is needed.
 
@@ -25,24 +25,40 @@ These work with scalar or vector equations. They will choose an algorithm for yo
 
 specific algorithms:
 --------------------
-So far have these algorithms as a starting point.
-
 | ``itoEuler(f, G, y0, tspan)``: the Euler Maruyama algorithm for Ito equations
 | ``stratHeun(f, G, y0, tspan)``: the Stratonovich Heun algorithm for Stratonovich equations
 | ``itoSRI2(f, G, y0, tspan)``: the Rößler 2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRI2 for Ito equations
 | ``itoSRI2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G)
 
-| ``deltaW(N, m, h)`` Generate increments of m independent Wiener processes for each of N time intervals of length h
+utility functions:
+~~~~~~~~~~~~~~~~~~
+| ``deltaW(N, m, h)``: Generate increments of m independent Wiener processes for each of N time intervals of length h
 
 Repeated integrals by the method of Kloeden, Platen and Wright (1992):
 
-| ``Ikpw(dW, h, n=5)`` Approximate repeated Ito integrals
-| ``Jkpw(dW, h, n=5)`` Approximate repeated Stratonovich integrals
+| ``Ikpw(dW, h, n=5)``: Approximate repeated Ito integrals
+| ``Jkpw(dW, h, n=5)``: Approximate repeated Stratonovich integrals
 
 Repeated integrals by the method of Wiktorsson (2001):
 
-| ``Iwik(dW, h, n=5)`` Approximate repeated Ito integrals
-| ``Jwik(dW, h, n=5)`` Approximate repeated Stratonovich integrals
+| ``Iwik(dW, h, n=5)``: Approximate repeated Ito integrals
+| ``Jwik(dW, h, n=5)``: Approximate repeated Stratonovich integrals
+
+References for these algorithms:
+--------------------------------
+
+| ``itoEuler``: 
+| G. Maruyama (1955) Continuous Markov processes and stochastic equations
+| ``stratHeun``: 
+| W. Rumelin (1982) Numerical Treatment of Stochastic Differential Equations
+| R. Mannella (2002) Integration of Stochastic Differential Equations on a Computer
+| K. Burrage, P. M. Burrage and T. Tian (2004) Numerical methods for strong solutions of stochastic differential equations: an overview
+| ``itoSRI2``: 
+| A. Rößler (2010) Runge-Kutta Methods for the Strong Approximation of Solutions of Stochastic Differential Equations
+| ``Ikpw, Jkpw``:
+| P. Kloeden, E. Platen and I. Wright (1992) The approximation of multiple stochastic integrals
+| ``Iwik, Jwik``:
+| M. Wiktorsson (2001) Joint Characteristic Function and Simultaneous Simulation of Iterated Ito Integrals for Multiple Independent Brownian Motions
 
 TODO
 ----
