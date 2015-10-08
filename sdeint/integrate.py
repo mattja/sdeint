@@ -26,7 +26,7 @@ Algorithms implemented so far:
 """
 
 from __future__ import absolute_import
-from .wiener import deltaW
+from .wiener import deltaW, Ikpw, Iwik, Jkpw, Jwik
 import numpy as np
 import numbers
 
@@ -63,16 +63,37 @@ def _check_args(f, G, y0, tspan):
                 return np.array([[fn(y[0], t)]], dtype=numtype)
             newfn.__name__ = fn.__name__
             return newfn
-        if isinstance(f(y0_orig, 0.0), numbers.Number):
+        if isinstance(f(y0_orig, tspan[0]), numbers.Number):
             f = make_vector_fn(f)
-        if isinstance(G(y0_orig, 0.0), numbers.Number):
+        if isinstance(G(y0_orig, tspan[0]), numbers.Number):
             G = make_matrix_fn(G)
     # determine dimension d of the system
     d = len(y0)
-    if len(f(y0, tspan[0])) != d or len(G(y0, tspan[0])) != d:
-        raise SDEValueError('y0, f and G have incompatible shapes.')
-    # determine number of independent Wiener processes m
-    m = G(y0, tspan[0]).shape[1]
+    if len(f(y0, tspan[0])) != d:
+        raise SDEValueError('y0 and f have incompatible shapes.')
+    message = """y0 has length %d. So G must either be a single function
+              returning a matrix of shape (%d, m), or else a list of m separate
+              functions each returning a column of G, with shape (%d,)""" % (
+                  d, d, d)
+    if callable(G):
+        # then G must be a function returning a d x m matrix
+        Gtest = G(y0, tspan[0])
+        if Gtest.ndim != 2 or Gtest.shape[0] != d:
+            raise SDEValueError(message)
+        # determine number of independent Wiener processes m
+        m = Gtest.shape[1]
+    else:
+        # G should be a list of m functions g_i giving columns of G
+        G = tuple(G)
+        m = len(G)
+        Gtest = np.zeros((d, m))
+        for k in range(0, m-1):
+            if not callable(G[k]):
+                raise SDEValueError(message)
+            Gtestk = G[k](y0, tspan[0])
+            if shape(Gtestk) != (d,):
+                raise SDEValueError(message)
+            Gtest[:,k] = Gtestk
     return (d, m, f, G, y0, tspan)
 
 
@@ -191,4 +212,99 @@ def stratHeun(f, G, y0, tspan):
         ybar = y1 + f(y1, t1)*dt + G(y1, t1).dot(dW)
         y[i] = (y1 + 0.5*(f(y1, t1) + f(ybar, t2))*dt +
                 0.5*(G(y1, t1) + G(ybar, t2)).dot(dW))
+    return y
+
+
+def itoSRI2(f, G, y0, tspan, Imethod=Iwik):
+    """Use the Rößler2010 order 1.0 strong Stochastic Runge-Kutta algorithm
+    SRI2 to integrate an Ito equation dy = f(y,t)dt + G(y,t)dW(t)
+
+    where y is d-dimensional vector variable, f is a vector-valued function,
+    G is a d x m matrix-valued function giving the noise coefficients and
+    dW(t) is a vector of m independent Wiener increments.
+
+    This algorithm is suitable for Ito systems with an arbitrary noise
+    coefficient matrix G (i.e. the noise does not need to be scalar, diagonal,
+    or commutative). The algorithm has order 2.0 convergence for the
+    deterministic part alone and order 1.0 strong convergence for the complete
+    stochastic system.
+
+    Args:
+      f: A function f(y, t) returning an array of shape (d,)
+         Vector-valued function to define the deterministic part of the system
+
+      G: The d x m coefficient function G can be given in two different ways:
+
+         You can provide a single function G(y, t) that returns an array of
+         shape (d, m). In this case the entire matrix G() will be evaluated
+         2m+1 times at each time step so complexity grows quadratically with m.
+
+         Alternatively you can provide a list of m functions g(y, t) each
+         defining one column of G (each returning an array of shape (d,).
+         In this case each g will be evaluated 3 times at each time step so
+         complexity grows linearly with m. If your system has large m and
+         G involves complicated functions, consider using this way.
+
+      y0: array of shape (d,) giving the initial state vector y(t==0)
+
+      tspan (array): The sequence of time points for which to solve for y.
+        These must be equally spaced, e.g. np.arange(0,10,0.005)
+        tspan[0] is the intial time corresponding to the initial state y0.
+
+      Imethod (callable, optional): which function to use to simulate repeated
+        Ito integrals. Here you can choose either sdeint.Iwik (the default) or
+        sdeint.Ikpw (which uses less memory in the current implementation).
+
+    Returns:
+      y: array, with shape (len(tspan), len(y0))
+         With the initial value y0 in the first row
+
+    Raises:
+      SDEValueError
+
+    See also:
+      A. Rößler (2010) Runge-Kutta Methods for the Strong Approximation of
+        Solutions of Stochastic Differential Equations
+    """
+    (d, m, f, G, y0, tspan) = _check_args(f, G, y0, tspan)
+    have_separate_g = (not callable(G)) # if G is given as m separate functions
+    N = len(tspan)
+    # pre-generate all Wiener increments (for m independent Wiener processes):
+    h = (tspan[N-1] - tspan[0])/(N - 1) # assuming equal time steps
+    dW = deltaW(N - 1, m, h) # shape (N, m)
+    # pre-generate repeated stochastic integrals I_ij for each time step
+    __, I = Imethod(dW, h) # shape (N, m, m)
+    # allocate space for result
+    y = np.zeros((N, d), dtype=type(y0[0]))
+    y[0] = y0;
+    Gn = np.zeros((d, m), dtype=y.dtype)
+    for n in range(0, N-1):
+        tn = tspan[n]
+        tn1 = tspan[n+1]
+        h = tn1 - tn
+        sqrth = np.sqrt(h)
+        Yn = y[n] # shape (d,)
+        Ik = dW[n,:] # shape (m,)
+        Iij = I[n,:,:] # shape (m, m)
+        fnh = f(Yn, tn)*h # shape (d,)
+        if have_separate_g:
+            for k in range(0, m-1):
+                Gn[:,k] = G[k](Yn, tn)
+        else:
+            Gn = G(Yn, tn)
+        sum1 = np.dot(Gn, Iij)/sqrth # shape (d, m)
+        H20 = Yn + fnh # shape (d,)
+        H20b = np.reshape(H20, (d, 1))
+        H2 = H20b + sum1 # shape (d, m)
+        H30 = Yn
+        H3 = H20b - sum1
+        fn1h = f(H20, tn1)*h
+        Yn1 = Yn + 0.5*(fnh + fn1h) + np.dot(Gn, Ik)
+        if have_separate_g:
+            for k in range(0, m-1):
+                Yn1 += 0.5*sqrth*(G[k](H2[:,k], tn1) - G[k](H3[:,k], tn1))
+        else:
+            for k in range(0, m-1):
+                Yn1 += 0.5*sqrth*(G(H2[:,k], tn1)[:,k] - G(H3[:,k], tn1)[:,k])
+        y[n+1] = Yn1
     return y
