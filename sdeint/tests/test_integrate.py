@@ -9,7 +9,7 @@ s = np.random.randint(2**32)
 print('Testing using random seed %d' % s)
 np.random.seed(s)
 
-tspan = np.arange(0.0, 1000.0, 0.002)
+tspan = np.arange(0.0, 3000.0, 0.002)
 
 def test_mismatched_f():
     y0 = np.zeros(3)
