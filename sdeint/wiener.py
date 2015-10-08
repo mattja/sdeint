@@ -32,6 +32,12 @@ References:
 
 import numpy as np
 
+numpy_version = list(map(int, np.version.short_version.split('.')))
+if numpy_version >= [1,10,0]:
+    broadcast_to = np.broadcast_to
+else:
+    from ._broadcast import broadcast_to
+
 
 def deltaW(N, m, h):
     """Generate sequence of Wiener increments for m independent Wiener
@@ -193,7 +199,7 @@ def _Atilde(N, h, m, k, dW, Km0, Pm0):
     Xk = np.random.normal(0.0, 1.0, (N, m, 1))
     Yk = np.random.normal(0.0, 1.0, (N, m, 1))
     factor1 = np.dot(Km0, Pm0 - np.eye(m**2))
-    factor1 = np.broadcast_to(factor1, (N, M, m**2))
+    factor1 = broadcast_to(factor1, (N, M, m**2))
     factor2 = _kp(Yk + np.sqrt(2.0/h)*dW, Xk)
     return _dot(factor1, factor2)/k
 
@@ -201,12 +207,12 @@ def _Atilde(N, h, m, k, dW, Km0, Pm0):
 def _sigmainf(N, h, m, dW, Km0, Pm0):
     """Asymptotic covariance matrix \Sigma_\infty  Wiktorsson2001 eqn (4.5)"""
     M = m*(m-1)/2
-    Im = np.broadcast_to(np.eye(m), (N, m, m))
-    IM = np.broadcast_to(np.eye(M), (N, M, M))
+    Im = broadcast_to(np.eye(m), (N, m, m))
+    IM = broadcast_to(np.eye(M), (N, M, M))
     Ims0 = np.eye(m**2)
-    factor1 = np.broadcast_to((2.0/h)*np.dot(Km0, Ims0 - Pm0), (N, M, m**2))
+    factor1 = broadcast_to((2.0/h)*np.dot(Km0, Ims0 - Pm0), (N, M, m**2))
     factor2 = _kp2(Im, _dot(dW, _t(dW)))
-    factor3 = np.broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
+    factor3 = broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
     return 2*IM + _dot(_dot(factor1, factor2), factor3)
 
 
@@ -249,14 +255,14 @@ def Iwik(dW, h, n=5):
     S = _sigmainf(N, h, m, dW, Km0, Pm0)
     normdW2 = np.sum(np.abs(dW)**2, axis=1)
     radical = np.sqrt(1.0 + normdW2/h).reshape((N, 1, 1))
-    IM = np.broadcast_to(np.eye(M), (N, M, M))
-    Im = np.broadcast_to(np.eye(m), (N, m, m))
+    IM = broadcast_to(np.eye(M), (N, M, M))
+    Im = broadcast_to(np.eye(m), (N, m, m))
     Ims0 = np.eye(m**2)
     sqrtS = (S + 2.0*radical*IM)/(np.sqrt(2.0)*(1.0 + radical))
     G = np.random.normal(0.0, 1.0, (N, M, 1))
     tailsum = h/(2.0*np.pi)*_a(n)**0.5*_dot(sqrtS, G)
     Adash = A + tailsum # our estimate of the area integrals
-    factor3 = np.broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
+    factor3 = broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
     vecI = 0.5*(_kp(dW, dW) - _vec(h*Im)) + _dot(factor3, Adash)
     I = _unvec(vecI)
     return (Adash, I)
