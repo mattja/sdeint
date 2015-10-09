@@ -45,7 +45,7 @@ def deltaW(N, m, h):
 
     Returns:
       dW (array of shape (N, m)): The [n, j] element has the value
-        W_j((n+1)*h) - W_j(n*h) 
+      W_j((n+1)*h) - W_j(n*h) 
     """
     return np.random.normal(0.0, np.sqrt(h), (N, m))
 
@@ -86,7 +86,7 @@ def Ikpw(dW, h, n=5):
       (A, I) where
         A: array of shape (N, m, m) giving the Levy areas that were used.
         I: array of shape (N, m, m) giving an m x m matrix of repeated Ito 
-          integral values for each of the N time intervals.
+        integral values for each of the N time intervals.
     """
     N = dW.shape[0]
     m = dW.shape[1]
@@ -238,7 +238,7 @@ def Iwik(dW, h, n=5):
       (Atilde, I) where
         Atilde: array of shape (N, m(m-1)/2, 1) giving the area integrals used.
         I: array of shape (N, m, m) giving an m x m matrix of repeated Ito
-          integral values for each of the N time intervals.
+        integral values for each of the N time intervals.
     """
     N = dW.shape[0]
     m = dW.shape[1]

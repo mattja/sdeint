@@ -5,9 +5,8 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version. See <http://www.gnu.org/licenses/>.
 
-"""
-Numerical integration algorithms for Ito and Stratonovich stochastic ordinary
-differential equations.
+"""Numerical integration algorithms for Ito and Stratonovich stochastic
+ordinary differential equations.
 
 Usage:
     itoint(f, G, y0, tspan)  for Ito equation dy = f dt + G dW
@@ -20,12 +19,12 @@ Usage:
 
 sdeint will choose an algorithm for you. Or you can choose one explicitly:
 
-    itoEuler: the Euler Maruyama algorithm for Ito equations.
-    stratHeun: the Stratonovich Heun algorithm for Stratonovich equations.
-    itoSRI2: the Roessler2010 order 1.0 strong Stochastic Runge-Kutta
-      algorithm SRI2 for Ito equations
-    stratSRS2: the Roessler2010 order 1.0 strong Stochastic Runge-Kutta
-      algorithm SRS2 for Stratonovich equations
+itoEuler: the Euler Maruyama algorithm for Ito equations.
+stratHeun: the Stratonovich Heun algorithm for Stratonovich equations.
+itoSRI2: the Roessler2010 order 1.0 strong Stochastic Runge-Kutta
+algorithm SRI2 for Ito equations
+stratSRS2: the Roessler2010 order 1.0 strong Stochastic Runge-Kutta
+algorithm SRS2 for Stratonovich equations
 """
 
 from __future__ import absolute_import
