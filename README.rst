@@ -9,7 +9,7 @@ sdeint is a collection of numerical algorithms for integrating Ito and Stratonov
 
 There already exist some python and MATLAB packages providing Euler-Maruyama and Milstein algorithms, and a couple of others. So why am I bothering to make another package?  
 
-It is because there has been 25 years of further research with better methods but for some reason I can't find any open source reference implementations. Not even for those methods published by Kloeden and Platen way back in 1992. So I will aim to put some improved methods here.
+It is because there has been 25 years of further research with better methods but for some reason I can't find any open source reference implementations. Not even for those methods published by Kloeden and Platen way back in 1992. So I will aim to gradually add some improved methods here.
 
 This is prototype code in python, so not aiming for speed. Later can always rewrite these with loops in C when speed is needed.
 
@@ -29,6 +29,8 @@ specific algorithms:
 | ``stratHeun(f, G, y0, tspan)``: the Stratonovich Heun algorithm for Stratonovich equations
 | ``itoSRI2(f, G, y0, tspan)``: the Rößler 2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRI2 for Ito equations
 | ``itoSRI2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G)
+| ``stratSRS2(f, G, y0, tspan)``: the Rößler 2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRS2 for Stratonovich equations
+| ``stratSRS2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G)
 
 utility functions:
 ~~~~~~~~~~~~~~~~~~
@@ -53,7 +55,7 @@ References for these algorithms:
 | W. Rumelin (1982) Numerical Treatment of Stochastic Differential Equations
 | R. Mannella (2002) Integration of Stochastic Differential Equations on a Computer
 | K. Burrage, P. M. Burrage and T. Tian (2004) Numerical methods for strong solutions of stochastic differential equations: an overview
-| ``itoSRI2``: 
+| ``itoSRI2, stratSRS2``: 
 | A. Rößler (2010) Runge-Kutta Methods for the Strong Approximation of Solutions of Stochastic Differential Equations
 | ``Ikpw, Jkpw``:
 | P. Kloeden, E. Platen and I. Wright (1992) The approximation of multiple stochastic integrals
@@ -64,13 +66,15 @@ TODO
 ----
 - Write proper tests (using systems that can be solved exactly)
 
-- Add more recent strong stochastic Runge-Kutta algorithms.
-  Perhaps starting with Rößler (2010) or Burrage and Burrage (1996)
-
 - Add an implicit strong algorithm useful for stiff equations, perhaps the one
   from Kloeden and Platen (1999) section 12.4.
 
-- Currently prioritizing those algorithms that work for very general d-dimensional systems with arbitrary noise coefficient matrix, and which are derivative free. Eventually will add special case algorithms that give a speed increase for systems with certain symmetries. That is, 1-dimensional systems, systems with scalar noise, diagonal noise or commutative noise, etc.
+- Rewrite ``Iwik()`` and ``Jwik()`` so they don't waste so much memory.
+
+- Add more strong stochastic Runge-Kutta algorithms. Perhaps starting with
+  Burrage and Burrage (1996)
+
+- Currently prioritizing those algorithms that work for very general d-dimensional systems with arbitrary noise coefficient matrix, and which are derivative free. Eventually will add special case algorithms that give a speed increase for systems with certain symmetries. That is, 1-dimensional systems, systems with scalar noise, diagonal noise or commutative noise, etc. The idea is that ``itoint()`` and ``stratint()`` will detect these situations and dispatch to the most suitable algorithm.
 
 - Eventually implement the main loops in C for speed.
 

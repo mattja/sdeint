@@ -267,14 +267,102 @@ def itoSRI2(f, G, y0, tspan, Imethod=Iwik):
       A. Roessler (2010) Runge-Kutta Methods for the Strong Approximation of
         Solutions of Stochastic Differential Equations
     """
+    return _Roessler2010_SRK2(f, G, y0, tspan, Imethod)
+
+
+def stratSRS2(f, G, y0, tspan, Jmethod=Jwik):
+    """Use the Roessler2010 order 1.0 strong Stochastic Runge-Kutta algorithm
+    SRS2 to integrate a Stratonovich equation dy = f(y,t)dt + G(y,t)\circ dW(t)
+
+    where y is d-dimensional vector variable, f is a vector-valued function,
+    G is a d x m matrix-valued function giving the noise coefficients and
+    dW(t) is a vector of m independent Wiener increments.
+
+    This algorithm is suitable for Stratonovich systems with an arbitrary noise
+    coefficient matrix G (i.e. the noise does not need to be scalar, diagonal,
+    or commutative). The algorithm has order 2.0 convergence for the
+    deterministic part alone and order 1.0 strong convergence for the complete
+    stochastic system.
+
+    Args:
+      f: A function f(y, t) returning an array of shape (d,)
+         Vector-valued function to define the deterministic part of the system
+
+      G: The d x m coefficient function G can be given in two different ways:
+
+         You can provide a single function G(y, t) that returns an array of
+         shape (d, m). In this case the entire matrix G() will be evaluated
+         2m+1 times at each time step so complexity grows quadratically with m.
+
+         Alternatively you can provide a list of m functions g(y, t) each
+         defining one column of G (each returning an array of shape (d,).
+         In this case each g will be evaluated 3 times at each time step so
+         complexity grows linearly with m. If your system has large m and
+         G involves complicated functions, consider using this way.
+
+      y0: array of shape (d,) giving the initial state vector y(t==0)
+
+      tspan (array): The sequence of time points for which to solve for y.
+        These must be equally spaced, e.g. np.arange(0,10,0.005)
+        tspan[0] is the intial time corresponding to the initial state y0.
+
+      Imethod (callable, optional): which function to use to simulate repeated
+        Stratonovich integrals. Here you can choose either sdeint.Jwik (the
+        default) or sdeint.Jkpw (which uses less memory in current version).
+
+    Returns:
+      y: array, with shape (len(tspan), len(y0))
+         With the initial value y0 in the first row
+
+    Raises:
+      SDEValueError
+
+    See also:
+      A. Roessler (2010) Runge-Kutta Methods for the Strong Approximation of
+        Solutions of Stochastic Differential Equations
+    """
+    return _Roessler2010_SRK2(f, G, y0, tspan, Jmethod)
+
+
+def _Roessler2010_SRK2(f, G, y0, tspan, IJmethod):
+    """Implements the Roessler2010 order 1.0 strong Stochastic Runge-Kutta
+    algorithms SRI2 (for Ito equations) and SRS2 (for Stratonovich equations). 
+
+    Algorithms SRI2 and SRS2 are almost identical and have the same extended
+    Butcher tableaus. The difference is that Ito repeateded integrals I_ij are
+    replaced by Stratonovich repeated integrals J_ij when integrating a
+    Stratonovich equation (Theorem 6.2 in Roessler2010).
+
+    Args:
+      f: A function f(y, t) returning an array of shape (d,)
+      G: Either a function G(y, t) that returns an array of shape (d, m), 
+         or a list of m functions g(y, t) each returning an array shape (d,).
+      y0: array of shape (d,) giving the initial state
+      tspan (array): Sequence of equally spaced time points
+      IJmethod (callable): which function to use to generate repeated
+        integrals. N.B. for an Ito equation, must use an Ito version here
+        (either Ikpw or Iwik). For a Stratonovich equation, must use a
+        Stratonovich version here (Jkpw or Jwik).
+
+    Returns:
+      y: array, with shape (len(tspan), len(y0))
+
+    Raises:
+      SDEValueError
+
+    See also:
+      A. Roessler (2010) Runge-Kutta Methods for the Strong Approximation of
+        Solutions of Stochastic Differential Equations
+    """
     (d, m, f, G, y0, tspan) = _check_args(f, G, y0, tspan)
     have_separate_g = (not callable(G)) # if G is given as m separate functions
     N = len(tspan)
     # pre-generate all Wiener increments (for m independent Wiener processes):
     h = (tspan[N-1] - tspan[0])/(N - 1) # assuming equal time steps
     dW = deltaW(N - 1, m, h) # shape (N, m)
-    # pre-generate repeated stochastic integrals I_ij for each time step
-    __, I = Imethod(dW, h) # shape (N, m, m)
+    # pre-generate repeated stochastic integrals for each time step.
+    # This must be I_ij for the Ito case or J_ij for the Stratonovich case:
+    __, I = IJmethod(dW, h) # shape (N, m, m)
     # allocate space for result
     y = np.zeros((N, d), dtype=type(y0[0]))
     y[0] = y0;
