@@ -104,7 +104,7 @@ def itoint(f, G, y0, tspan):
     # In future versions we can automatically choose here the most suitable
     # Ito algorithm based on properties of the system and noise.
     (d, m, f, G, y0, tspan) = _check_args(f, G, y0, tspan)
-    chosenAlgorithm = itoEuler
+    chosenAlgorithm = itoSRI2
     return chosenAlgorithm(f, G, y0, tspan)
 
 
@@ -114,7 +114,7 @@ def stratint(f, G, y0, tspan):
     # In future versions we can automatically choose here the most suitable
     # Stratonovich algorithm based on properties of the system and noise.
     (d, m, f, G, y0, tspan) = _check_args(f, G, y0, tspan)
-    chosenAlgorithm = stratHeun
+    chosenAlgorithm = stratSRS2
     return chosenAlgorithm(f, G, y0, tspan)
 
 
