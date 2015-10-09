@@ -115,10 +115,13 @@ def Jkpw(dW, h, n=5):
     Returns:
       (A, J) where
         A: array of shape (N, m, m) giving the Levy areas that were used.
-        I: array of shape (N, m, m) giving an m x m matrix of repeated Ito 
-          integral values for each of the N time intervals.
+        J: array of shape (N, m, m) giving an m x m matrix of repeated
+        Stratonovich integral values for each of the N time intervals.
     """
-    pass
+    m = dW.shape[1]
+    A, I = Ikpw(dW, h, n)
+    J = I + 0.5*h*np.eye(m).reshape((1, m, m))
+    return (A, J)
 
 
 # The code below this point implements the method of Wiktorsson2001.
@@ -193,8 +196,8 @@ def _K(m):
     return K
 
 
-def _Atilde(N, h, m, k, dW, Km0, Pm0):
-    """kth term in the sum for area integral (Wiktorsson2001, p481, 1st eqn)"""
+def _AtildeTerm(N, h, m, k, dW, Km0, Pm0):
+    """kth term in the sum for Atilde (Wiktorsson2001 p481, 1st eqn)"""
     M = m*(m-1)/2
     Xk = np.random.normal(0.0, 1.0, (N, m, 1))
     Yk = np.random.normal(0.0, 1.0, (N, m, 1))
@@ -232,9 +235,9 @@ def Iwik(dW, h, n=5):
       n (int, optional): how many terms to take in the series expansion
 
     Returns:
-      (A, I) where
-        A: array of shape (N, m(m-1)/2, m) giving the Levy areas that were used
-        I: array of shape (N, m, m) giving an m x m matrix of repeated Ito 
+      (Atilde, I) where
+        Atilde: array of shape (N, m(m-1)/2, 1) giving the area integrals used.
+        I: array of shape (N, m, m) giving an m x m matrix of repeated Ito
           integral values for each of the N time intervals.
     """
     N = dW.shape[0]
@@ -248,10 +251,10 @@ def Iwik(dW, h, n=5):
     Pm0 = _P(m)
     Km0 = _K(m)
     M = m*(m-1)/2
-    A = _Atilde(N, h, m, 1, dW, Km0, Pm0)
+    Atilde_n = _AtildeTerm(N, h, m, 1, dW, Km0, Pm0)
     for k in range(2, n+1):
-        A += _Atilde(N, h, m, k, dW, Km0, Pm0)
-    A = (h/(2.0*np.pi))*A
+        Atilde_n += _AtildeTerm(N, h, m, k, dW, Km0, Pm0)
+    Atilde_n = (h/(2.0*np.pi))*Atilde_n # approximation after n terms
     S = _sigmainf(N, h, m, dW, Km0, Pm0)
     normdW2 = np.sum(np.abs(dW)**2, axis=1)
     radical = np.sqrt(1.0 + normdW2/h).reshape((N, 1, 1))
@@ -261,12 +264,30 @@ def Iwik(dW, h, n=5):
     sqrtS = (S + 2.0*radical*IM)/(np.sqrt(2.0)*(1.0 + radical))
     G = np.random.normal(0.0, 1.0, (N, M, 1))
     tailsum = h/(2.0*np.pi)*_a(n)**0.5*_dot(sqrtS, G)
-    Adash = A + tailsum # our estimate of the area integrals
+    Atilde = Atilde_n + tailsum # our final approximation of the areas
     factor3 = broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
-    vecI = 0.5*(_kp(dW, dW) - _vec(h*Im)) + _dot(factor3, Adash)
+    vecI = 0.5*(_kp(dW, dW) - _vec(h*Im)) + _dot(factor3, Atilde)
     I = _unvec(vecI)
-    return (Adash, I)
+    return (Atilde, I)
 
 
 def Jwik(dW, h, n=5):
-    pass
+    """matrix J approximating repeated Stratonovich integrals for each of N
+    time intervals, using the method of Wiktorsson (2001).
+
+    Args:
+      dW (array of shape (N, m)): giving m independent Weiner increments for
+        each time step N. (You can make this array using sdeint.deltaW())
+      h (float): the time step size
+      n (int, optional): how many terms to take in the series expansion
+
+    Returns:
+      (Atilde, J) where
+        Atilde: array of shape (N, m(m-1)/2, 1) giving the area integrals used.
+        J: array of shape (N, m, m) giving an m x m matrix of repeated
+        Stratonovich integral values for each of the N time intervals.
+    """
+    m = dW.shape[1]
+    Atilde, I = Iwik(dW, h, n)
+    J = I + 0.5*h*np.eye(m).reshape((1, m, m))
+    return (Atilde, J)

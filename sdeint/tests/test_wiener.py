@@ -1,10 +1,10 @@
-"""Still need to write adequate tests.
+"""Still need to write tests for the statistics of offdiagonal I, J.
 """
 
 import pytest
 import numpy as np
-from sdeint.wiener import (deltaW, _t, _dot, Ikpw, _vec, _unvec, _kp, _kp2, _P,
-                           _K, _a)
+from sdeint.wiener import (deltaW, _t, _dot, Ikpw, Jkpw, Iwik, Jwik, _vec, 
+                           _unvec, _kp, _kp2, _P, _K, _a)
 
 numpy_version = list(map(int, np.version.short_version.split('.')))
 if numpy_version >= [1,10,0]:
@@ -20,16 +20,6 @@ np.random.seed(s)
 N = 10000
 h = 0.002
 m = 8
-
-
-def test_Ikpw_identities():
-    """Test the relations given in Wiktorsson2001 equation (2.1)"""
-    dW = deltaW(N, m, h).reshape((N, m, 1))
-    A, I = Ikpw(dW, h)
-    Im = broadcast_to(np.eye(m), (N, m, m))
-    assert(np.allclose(I + _t(I), _dot(dW, _t(dW)) - h*Im))
-    assert(np.allclose(A, -_t(A)))
-    assert(np.allclose(2.0*(I - A), _dot(dW, _t(dW)) - h*Im))
 
 
 def test_vec_unvec():
@@ -76,10 +66,10 @@ def test_P():
     assert(np.allclose(np.dot(Pm0, Pm0), np.eye(m**2))) # is its own inverse
     Pm = broadcast_to(Pm0, (N, m**2, m**2))
     for n in range(0, N):
-        assert(np.dot(Pm0, np.kron(X[n,:,0], Y[n,:,0])),
-               np.kron(Y[n,:,0], X[n,:,0]))
+        assert(np.allclose(np.dot(Pm0, np.kron(X[n,:,0], Y[n,:,0])),
+                           np.kron(Y[n,:,0], X[n,:,0])))
     # next line is equivalent to the previous 3 lines:
-    assert(_dot(Pm, _kp(X, Y)), _kp(Y, X))
+    assert(np.allclose(_dot(Pm, _kp(X, Y)), _kp(Y, X)))
 
 
 def test_K():
@@ -104,11 +94,40 @@ def test_a():
     assert(np.abs(_a(5) - 0.181322955737115) < 1e-15)
 
 
-def test_Iwik_identities():
+def test_Ikpw_Jkpw_identities():
     """Test the relations given in Wiktorsson2001 equation (2.1)"""
     dW = deltaW(N, m, h).reshape((N, m, 1))
     A, I = Ikpw(dW, h)
+    assert(A.shape == (N, m, m) and I.shape == (N, m, m))
     Im = broadcast_to(np.eye(m), (N, m, m))
     assert(np.allclose(I + _t(I), _dot(dW, _t(dW)) - h*Im))
     assert(np.allclose(A, -_t(A)))
     assert(np.allclose(2.0*(I - A), _dot(dW, _t(dW)) - h*Im))
+    # and tests for Stratonovich case
+    A, J = Jkpw(dW, h)
+    assert(A.shape == (N, m, m) and J.shape == (N, m, m))
+    assert(np.allclose(J + _t(J), _dot(dW, _t(dW))))
+    assert(np.allclose(2.0*(J - A), _dot(dW, _t(dW))))
+
+
+def test_Iwik_Jwik_identities():
+    dW = deltaW(N, m, h).reshape((N, m, 1))
+    Atilde, I = Iwik(dW, h)
+    M = m*(m-1)/2
+    assert(Atilde.shape == (N, M, 1) and I.shape == (N, m, m))
+    Im = broadcast_to(np.eye(m), (N, m, m))
+    assert(np.allclose(I + _t(I), _dot(dW, _t(dW)) - h*Im))
+    # can get A from Atilde: (Wiktorsson2001 equation between (4.3) and (4.4))
+    Ims = broadcast_to(np.eye(m*m), (N, m*m, m*m))
+    Pm = broadcast_to(_P(m), (N, m*m, m*m))
+    Km = broadcast_to(_K(m), (N, M, m*m))
+    A = _unvec(_dot(_dot((Ims - Pm), _t(Km)), Atilde))
+    # now can test this A against the identities of Wiktorsson eqn (2.1)
+    assert(np.allclose(A, -_t(A)))
+    assert(np.allclose(2.0*(I - A), _dot(dW, _t(dW)) - h*Im))
+    # and tests for Stratonovich case
+    Atilde, J = Jwik(dW, h)
+    assert(Atilde.shape == (N, M, 1) and J.shape == (N, m, m))
+    assert(np.allclose(J + _t(J), _dot(dW, _t(dW))))
+    A = _unvec(_dot(_dot((Ims - Pm), _t(Km)), Atilde))
+    assert(np.allclose(2.0*(J - A), _dot(dW, _t(dW))))
