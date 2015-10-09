@@ -216,7 +216,7 @@ def stratHeun(f, G, y0, tspan):
     return y
 
 
-def itoSRI2(f, G, y0, tspan, Imethod=Iwik):
+def itoSRI2(f, G, y0, tspan, Imethod=Ikpw):
     """Use the Roessler2010 order 1.0 strong Stochastic Runge-Kutta algorithm
     SRI2 to integrate an Ito equation dy = f(y,t)dt + G(y,t)dW(t)
 
@@ -253,8 +253,9 @@ def itoSRI2(f, G, y0, tspan, Imethod=Iwik):
         tspan[0] is the intial time corresponding to the initial state y0.
 
       Imethod (callable, optional): which function to use to simulate repeated
-        Ito integrals. Here you can choose either sdeint.Iwik (the default) or
-        sdeint.Ikpw (which uses less memory in the current implementation).
+        Ito integrals. Here you can choose either sdeint.Ikpw (the default) or
+        sdeint.Iwik (which is more accurate but uses a lot of memory in the
+        current implementation).
 
     Returns:
       y: array, with shape (len(tspan), len(y0))
@@ -270,7 +271,7 @@ def itoSRI2(f, G, y0, tspan, Imethod=Iwik):
     return _Roessler2010_SRK2(f, G, y0, tspan, Imethod)
 
 
-def stratSRS2(f, G, y0, tspan, Jmethod=Jwik):
+def stratSRS2(f, G, y0, tspan, Jmethod=Jkpw):
     """Use the Roessler2010 order 1.0 strong Stochastic Runge-Kutta algorithm
     SRS2 to integrate a Stratonovich equation dy = f(y,t)dt + G(y,t)\circ dW(t)
 
@@ -306,9 +307,10 @@ def stratSRS2(f, G, y0, tspan, Jmethod=Jwik):
         These must be equally spaced, e.g. np.arange(0,10,0.005)
         tspan[0] is the intial time corresponding to the initial state y0.
 
-      Imethod (callable, optional): which function to use to simulate repeated
-        Stratonovich integrals. Here you can choose either sdeint.Jwik (the
-        default) or sdeint.Jkpw (which uses less memory in current version).
+      Jmethod (callable, optional): which function to use to simulate repeated
+        Stratonovich integrals. Here you can choose either sdeint.Jkpw (the
+        default) or sdeint.Jwik (which is more accurate but uses a lot of
+        memory in the current implementation).
 
     Returns:
       y: array, with shape (len(tspan), len(y0))
