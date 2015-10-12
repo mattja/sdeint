@@ -22,9 +22,11 @@ sdeint will choose an algorithm for you. Or you can choose one explicitly:
 itoEuler: the Euler Maruyama algorithm for Ito equations.
 stratHeun: the Stratonovich Heun algorithm for Stratonovich equations.
 itoSRI2: the Roessler2010 order 1.0 strong Stochastic Runge-Kutta
-algorithm SRI2 for Ito equations
+  algorithm SRI2 for Ito equations.
 stratSRS2: the Roessler2010 order 1.0 strong Stochastic Runge-Kutta
-algorithm SRS2 for Stratonovich equations
+  algorithm SRS2 for Stratonovich equations.
+stratKP2iS: the Kloeden and Platen two-step implicit order 1.0 strong algorithm
+  for Stratonovich equations.
 """
 
 from __future__ import absolute_import
@@ -399,4 +401,113 @@ def _Roessler2010_SRK2(f, G, y0, tspan, IJmethod):
             for k in range(0, m-1):
                 Yn1 += 0.5*sqrth*(G(H2[:,k], tn1)[:,k] - G(H3[:,k], tn1)[:,k])
         y[n+1] = Yn1
+    return y
+
+
+def stratKP2iS(f, G, y0, tspan, Jmethod=Jkpw, gam=None, al1=None, al2=None,
+               rtol=1e-4):
+    """Use the Kloeden and Platen two-step implicit order 1.0 strong algorithm
+    to integrate a Stratonovich equation dy = f(y,t)dt + G(y,t)\circ dW(t)
+
+    This semi-implicit algorithm may be useful for stiff systems. The noise
+    does not need to be scalar, diagonal, or commutative.
+
+    This algorithm is defined in Kloeden and Platen (1999) section 12.4,
+    equations (4.5) and (4.7). Here implementing that scheme with default
+    parameters \gamma_k = \alpha_{1,k} = \alpha_{2,k} = 0.5 for k=1..d using
+    MINPACK HYBRD algorithm to solve the implicit vector equation at each step.
+
+    Args:
+      f: A function f(y, t) returning an array of shape (d,) to define the
+        deterministic part of the system
+      G: A function G(y, t) returning an array of shape (d, m) to define the 
+        noise coefficients of the system
+      y0: array of shape (d,) giving the initial state
+      tspan (array): Sequence of equally spaced time points
+      Jmethod (callable, optional): which function to use to simulate repeated
+        Stratonovich integrals. Here you can choose either sdeint.Jkpw (the
+        default) or sdeint.Jwik (which is more accurate but uses a lot of
+        memory in the current implementation).
+      gam, al1, al2 (optional arrays of shape (d,)): These can configure free
+        parameters \gamma_k, \alpha_{1,k}, \alpha_{2,k} of the algorithm.
+        You can omit these, then the default values 0.5 will be used.
+      rtol (float, optional): Relative error tolerance. The default is 1e-4.
+        This is the relative tolerance used when solving the implicit equation
+        for Y_{n+1} at each step. It does not mean that the overall sample path
+        approximation has this relative precision.
+    Returns:
+      y: array, with shape (len(tspan), len(y0))
+
+    Raises:
+      SDEValueError, RuntimeError
+
+    See also:
+      P. Kloeden and E. Platen (1999) Numerical Solution of Stochastic 
+        Differential Equations, revised and updated 3rd printing.
+    """
+    try:
+        from scipy.optimize import fsolve
+    except ImportError:
+        raise Error('stratKP2iS() requires package ``scipy`` to be installed.')
+    (d, m, f, G, y0, tspan) = _check_args(f, G, y0, tspan)
+    if not callable(G):
+        raise SDEValueError('G should be a function returning a d x m matrix.')
+    if np.iscomplexobj(y0):
+        raise SDEValueError("stratKP2iS() can't yet handle complex variables.")
+    if gam is None:
+        gam = np.ones((d,))*0.5  # Default level of implicitness \gamma_k = 0.5
+    if al1 is None:
+        al1 = np.ones((d,))*0.5  # Default \alpha_{1,k} = 0.5
+    if al2 is None:
+        al2 = np.ones((d,))*0.5  # Default \alpha_{2,k} = 0.5
+    N = len(tspan)
+    # pre-generate all Wiener increments (for m independent Wiener processes):
+    h = (tspan[N-1] - tspan[0])/(N - 1) # assuming equal time steps
+    dW = deltaW(N - 1, m, h) # shape (N, m)
+    # pre-generate repeated Stratonovich integrals for each time step
+    __, J = Jmethod(dW, h) # shape (N, m, m)
+    # allocate space for result
+    y = np.zeros((N, d), dtype=type(y0[0]))
+    def _imp(Ynp1, Yn, Ynm1, Vn, Vnm1, tnp1, tn, tnm1, fn, fnm1):
+        """At each step we will solve _imp(Ynp1, ...) == 0 for Ynp1.
+        The meaning of these arguments is: Y_{n+1}, Y_n, Y_{n-1}, V_n, V_{n-1},
+        t_{n+1}, t_n, t_{n-1}, f(Y_n, t_n), f(Y_{n-1}, t_{n-1})."""
+        return ((1 - gam)*Yn + gam*Ynm1 + (al2*f(Ynp1, tnp1) +
+                (gam*al1 + (1 - al2))*fn + gam*(1 - al1)*fnm1)*h + Vn +
+                gam*Vnm1 - Ynp1)
+    fn = None
+    Vn = None
+    y[0] = y0;
+    for n in range(0, N-1):
+        tn = tspan[n]
+        tnp1 = tspan[n+1]
+        h = tnp1 - tn
+        sqrth = np.sqrt(h)
+        Yn = y[n] # shape (d,)
+        Jk = dW[n,:] # shape (m,)
+        Jij = J[n,:,:] # shape (m, m)
+        fnm1 = fn
+        fn = f(Yn, tn)
+        Gn = G(Yn, tn)
+        Ybar = (Yn + fn*h).reshape((d, 1)) + Gn*sqrth # shape (d, m)
+        sum1 = np.zeros((d,))
+        for j1 in range(0, m-1):
+            sum1 += np.dot(G(Ybar[:,j1], tn) - Gn, Jij[j1,:])
+        Vnm1 = Vn
+        Vn = np.dot(Gn, Jk) + sum1/sqrth
+        if n == 0:
+            # First step uses Kloeden&Platen explicit order 1.0 strong scheme:
+            y[n+1] = Yn + fn*h + Vn
+            continue
+        tnm1 = tspan[n-1]
+        Ynm1 = y[n-1] # shape (d,)
+        # now solve _imp(Ynp1, ...) == 0 for Ynp1, near to Yn
+        args = (Yn, Ynm1, Vn, Vnm1, tnp1, tn, tnm1, fn, fnm1)
+        (Ynp1, __, status, msg) = fsolve(_imp, Yn, args=args, xtol=rtol,
+                                         full_output=True)
+        if status == 1:
+            y[n+1] = Ynp1
+        else:
+            raise RuntimeError("At time t_n = %g Failed to solve for Y_{n+1}" +
+                               " using args %s. Reason: %s" % (tn, args, msg))
     return y

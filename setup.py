@@ -55,5 +55,6 @@ setup(
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering',
-        ]
+        ],
+    extras_require={'implicit_algorithms': ['scipy>=0.13']}
 )

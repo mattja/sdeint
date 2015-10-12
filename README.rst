@@ -25,24 +25,23 @@ These work with scalar or vector equations. They will choose an algorithm for yo
 
 specific algorithms:
 --------------------
-| ``itoEuler(f, G, y0, tspan)``: the Euler Maruyama algorithm for Ito equations
-| ``stratHeun(f, G, y0, tspan)``: the Stratonovich Heun algorithm for Stratonovich equations
-| ``itoSRI2(f, G, y0, tspan)``: the Rößler2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRI2 for Ito equations
-| ``itoSRI2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G)
-| ``stratSRS2(f, G, y0, tspan)``: the Rößler2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRS2 for Stratonovich equations
-| ``stratSRS2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G)
+| ``itoEuler(f, G, y0, tspan)``: the Euler Maruyama algorithm for Ito equations.
+| ``stratHeun(f, G, y0, tspan)``: the Stratonovich Heun algorithm for Stratonovich equations.
+| ``itoSRI2(f, G, y0, tspan)``: the Rößler2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRI2 for Ito equations.
+| ``itoSRI2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G).
+| ``stratSRS2(f, G, y0, tspan)``: the Rößler2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRS2 for Stratonovich equations.
+| ``stratSRS2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G).
+| ``stratKP2iS(f, G, y0, tspan)``: the Kloeden and Platen two-step implicit order 1.0 strong algorithm for Stratonovich equations.
 
 utility functions:
 ~~~~~~~~~~~~~~~~~~
 | ``deltaW(N, m, h)``: Generate increments of m independent Wiener processes for each of N time intervals of length h
 
-Repeated integrals by the method of Kloeden, Platen and Wright (1992):
-
+| Repeated integrals by the method of Kloeden, Platen and Wright (1992):
 | ``Ikpw(dW, h, n=5)``: Approximate repeated Ito integrals
 | ``Jkpw(dW, h, n=5)``: Approximate repeated Stratonovich integrals
 
-Repeated integrals by the method of Wiktorsson (2001):
-
+| Repeated integrals by the method of Wiktorsson (2001):
 | ``Iwik(dW, h, n=5)``: Approximate repeated Ito integrals
 | ``Jwik(dW, h, n=5)``: Approximate repeated Stratonovich integrals
 
@@ -57,6 +56,8 @@ References for these algorithms:
 | K. Burrage, P. M. Burrage and T. Tian (2004) Numerical methods for strong solutions of stochastic differential equations: an overview
 | ``itoSRI2, stratSRS2``: 
 | A. Rößler (2010) Runge-Kutta Methods for the Strong Approximation of Solutions of Stochastic Differential Equations
+| ``stratKP2iS``:
+| P. Kloeden and E. Platen (1999) Numerical Solution of Stochastic Differential Equations, revised and updated 3rd printing
 | ``Ikpw, Jkpw``:
 | P. Kloeden, E. Platen and I. Wright (1992) The approximation of multiple stochastic integrals
 | ``Iwik, Jwik``:
@@ -66,10 +67,9 @@ TODO
 ----
 - Write proper tests (using systems that can be solved exactly)
 
-- Add an implicit strong algorithm useful for stiff equations, perhaps the one
-  from Kloeden and Platen (1999) section 12.4.
-
 - Rewrite ``Iwik()`` and ``Jwik()`` so they don't waste so much memory.
+
+- Implement a Kloeden and Platen implicit strong alogrithm for Ito equations.
 
 - Add more strong stochastic Runge-Kutta algorithms. Perhaps starting with
   Burrage and Burrage (1996)
@@ -83,4 +83,4 @@ TODO
 See also:
 ---------
 
-``nsim``: Framework that uses this ``sdeint`` library to do massive parallel simulations of SDE systems (using multiple CPUs or a cluster) and provides some tools to analyze the resulting timeseries. https://github.com/mattja/nsim
+``nsim``: Framework that uses this ``sdeint`` library to enable massive parallel simulations of SDE systems (using multiple CPUs or a cluster) and provides some tools to analyze the resulting timeseries. https://github.com/mattja/nsim
