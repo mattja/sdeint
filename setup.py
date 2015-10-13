@@ -40,7 +40,7 @@ setup(
     license='GPLv3+',
     author='Matthew J. Aburn',
     install_requires=['numpy>=1.6'],
-    tests_require=['tox'],
+    tests_require=['tox', 'scipy>=0.13'],
     cmdclass = {'test': Tox},
     author_email='mattja6@gmail.com',
     description='Numerical integration of stochastic differential equations (SDE)',
