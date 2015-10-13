@@ -35,15 +35,15 @@ specific algorithms:
 
 utility functions:
 ~~~~~~~~~~~~~~~~~~
-| ``deltaW(N, m, h)``: Generate increments of m independent Wiener processes for each of N time intervals of length h
+| ``deltaW(N, m, h)``: Generate increments of m independent Wiener processes for each of N time intervals of length h.
 
 | Repeated integrals by the method of Kloeden, Platen and Wright (1992):
-| ``Ikpw(dW, h, n=5)``: Approximate repeated Ito integrals
-| ``Jkpw(dW, h, n=5)``: Approximate repeated Stratonovich integrals
+| ``Ikpw(dW, h, n=5)``: Approximate repeated Ito integrals.
+| ``Jkpw(dW, h, n=5)``: Approximate repeated Stratonovich integrals.
 
 | Repeated integrals by the method of Wiktorsson (2001):
-| ``Iwik(dW, h, n=5)``: Approximate repeated Ito integrals
-| ``Jwik(dW, h, n=5)``: Approximate repeated Stratonovich integrals
+| ``Iwik(dW, h, n=5)``: Approximate repeated Ito integrals.
+| ``Jwik(dW, h, n=5)``: Approximate repeated Stratonovich integrals.
 
 References for these algorithms:
 --------------------------------
@@ -69,7 +69,7 @@ TODO
 
 - Rewrite ``Iwik()`` and ``Jwik()`` so they don't waste so much memory.
 
-- Implement a Kloeden and Platen implicit strong alogrithm for Ito equations.
+- Implement the Ito version of the Kloeden and Platen two-step implicit alogrithm.
 
 - Add more strong stochastic Runge-Kutta algorithms. Perhaps starting with
   Burrage and Burrage (1996)
