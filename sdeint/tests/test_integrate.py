@@ -1,4 +1,4 @@
-"""Still need to write adequate tests.
+"""Still need to write proper tests against systems that can be solved exactly.
 """
 
 import pytest
@@ -19,7 +19,7 @@ def test_mismatched_f():
         y = sdeint.itoint(f, G, y0, tspan)
 
 def test_ito_1D_additive():
-    y0 = 0.0;
+    y0 = 0.0
     f = lambda y, t: -1.0 * y
     G = lambda y, t: 0.2
     y = sdeint.itoint(f, G, y0, tspan)
@@ -27,7 +27,7 @@ def test_ito_1D_additive():
     assert(np.isclose(np.var(y), 0.2*0.2/2, rtol=1e-01, atol=0))
 
 def test_strat_1D_additive():
-    y0 = 0.0;
+    y0 = 0.0
     f = lambda y, t: -1.0 * y
     G = lambda y, t: 0.2
     y = sdeint.stratint(f, G, y0, tspan)
@@ -47,7 +47,7 @@ def test_strat_ND_additive():
     # TODO assert spectral peak is around 1.0 radians/s
 
 def test_itoEuler_1D_additive():
-    y0 = 0.0;
+    y0 = 0.0
     f = lambda y, t: -1.0 * y
     G = lambda y, t: 0.2
     y = sdeint.itoEuler(f, G, y0, tspan)
@@ -65,3 +65,11 @@ def test_stratHeun_ND_additive():
     y = sdeint.stratHeun(f, G, y0, tspan)
     w = np.fft.rfft(y[:, 2])
     # TODO assert spectral peak is around 1.0 radians/s
+
+def test_stratKP2iS_1D_additive():
+    y0 = 0.0
+    f = lambda y, t: -1.0 * y
+    G = lambda y, t: 0.2
+    y = sdeint.stratKP2iS(f, G, y0, tspan)
+    assert(np.isclose(np.mean(y), 0.0, rtol=0, atol=1e-02))
+    assert(np.isclose(np.var(y), 0.2*0.2/2, rtol=1e-01, atol=0))
