@@ -13,6 +13,7 @@ It is because there has been 25 years of further research with better methods bu
 
 This is prototype code in python, so not aiming for speed. Later can always rewrite these with loops in C when speed is needed.
 
+Warning: this is an early pre-release. Still without proper tests and likely to give the wrong answers at this stage. Wait for version 1.0, or help me to write tests.
 Bug reports are very welcome!
 
 functions
