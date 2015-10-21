@@ -99,6 +99,7 @@ def Ikpw(dW, h, n=5):
         A += _Aterm(N, h, m, k, dW)
     A = (h/(2.0*np.pi))*A
     I = 0.5*(_dot(dW, _t(dW)) - np.diag(h*np.ones(m))) + A
+    dW = dW.reshape((N, -1)) # change back to shape (N, m)
     return (A, I)
 
 
@@ -268,6 +269,7 @@ def Iwik(dW, h, n=5):
     factor3 = broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
     vecI = 0.5*(_kp(dW, dW) - _vec(h*Im)) + _dot(factor3, Atilde)
     I = _unvec(vecI)
+    dW = dW.reshape((N, -1)) # change back to shape (N, m)
     return (Atilde, I)
 
 
