@@ -168,22 +168,19 @@ def itoEuler(f, G, y0, tspan, dW=None):
       Kloeden and Platen (1999) Numerical Solution of Differential Equations
     """
     (d, m, f, G, y0, tspan, dW, __) = _check_args(f, G, y0, tspan, dW, None)
-    n = len(tspan)
-    h = (tspan[n-1] - tspan[0])/(n - 1)
+    N = len(tspan)
+    h = (tspan[N-1] - tspan[0])/(N - 1)
     # allocate space for result
-    y = np.zeros((n, d), dtype=type(y0[0]))
+    y = np.zeros((N, d), dtype=type(y0[0]))
     if dW is None:
         # pre-generate Wiener increments (for m independent Wiener processes):
-        ndW = deltaW(n - 1, m, h)
-    else:
-        ndW = dW
+        dW = deltaW(N - 1, m, h)
     y[0] = y0;
-    for i in range(1, n):
-        t1 = tspan[i - 1]
-        t2 = tspan[i]
-        y1 = y[i - 1]
-        dW = ndW[i - 1]
-        y[i] = y1 + f(y1, t1)*h + G(y1, t1).dot(dW)
+    for n in range(0, N-1):
+        tn = tspan[n]
+        yn = y[n]
+        dWn = dW[n,:]
+        y[n+1] = yn + f(yn, tn)*h + G(yn, tn).dot(dWn)
     return y
 
 
@@ -224,24 +221,25 @@ def stratHeun(f, G, y0, tspan, dW=None):
          solutions of stochastic differential equations: an overview
     """
     (d, m, f, G, y0, tspan, dW, __) = _check_args(f, G, y0, tspan, dW, None)
-    n = len(tspan)
-    h = (tspan[n-1] - tspan[0])/(n - 1)
+    N = len(tspan)
+    h = (tspan[N-1] - tspan[0])/(N - 1)
     # allocate space for result
-    y = np.zeros((n, d), dtype=type(y0[0]))
+    y = np.zeros((N, d), dtype=type(y0[0]))
     if dW is None:
         # pre-generate Wiener increments (for m independent Wiener processes):
-        ndW = deltaW(n - 1, m, h)
-    else:
-        ndW = dW
+        dW = deltaW(N - 1, m, h)
     y[0] = y0;
-    for i in range(1, n):
-        t1 = tspan[i - 1]
-        t2 = tspan[i]
-        y1 = y[i - 1]
-        dW = ndW[i - 1]
-        ybar = y1 + f(y1, t1)*h + G(y1, t1).dot(dW)
-        y[i] = (y1 + 0.5*(f(y1, t1) + f(ybar, t2))*h +
-                0.5*(G(y1, t1) + G(ybar, t2)).dot(dW))
+    for n in range(0, N-1):
+        tn = tspan[n]
+        tnp1 = tspan[n+1]
+        yn = y[n]
+        dWn = dW[n,:]
+        fn = f(yn, tn)
+        Gn = G(yn, tn)
+        ybar = yn + fn*h + Gn.dot(dWn)
+        fnbar = f(ybar, tnp1)
+        Gnbar = G(ybar, tnp1)
+        y[n+1] = yn + 0.5*(fn + fnbar)*h + 0.5*(Gn + Gnbar).dot(dWn)
     return y
 
 
