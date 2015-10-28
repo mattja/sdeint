@@ -7,12 +7,15 @@ Refs:
 
     P. Kloeden, E. Platen and H. Schurz (2003) Numerical Solution of SDE
       Through Computer Experiments
+
+    A. Roessler (2010) Runge-Kutta Methods for the Strong Approximation of
+      Solutions of Stochastic Differential Equations
 """
 
 import pytest
 import numpy as np
 import sdeint
-from scipy import stats
+from scipy import stats, linalg
 from matplotlib import pyplot as plt
 
 s = np.random.randint(2**32)
@@ -206,6 +209,66 @@ def test_exact_KPS445(h=0.002):
     errHeun = np.abs(yHeun - y)
     errSRS2 = np.abs(ySRS2 - y)
     errKP2iS = np.abs(yKP2iS - y)
+
+
+def test_exact_R74(h=0.002, d=5, m=4):
+    """exactly solvable test system from Roessler2010 eqn (7.4)"""
+    tspan = np.arange(0.0, 20.0, h)
+    N = len(tspan)
+    A = np.ones((d, d))*0.05
+    B0 = np.ones((d, d))*0.01
+    for i in range(0, d):
+        A[i, i] = -1.5
+        B0[i, i] = 0.2
+    B = np.vstack([B0[np.newaxis,...]]*m)
+    y0 = np.ones(d)
+    def f(y, t):
+        return np.dot(A, y)
+    def G(y, t):
+        return np.dot(B, y).T
+    G_separate = [lambda y, t: np.dot(B0, y)] * m
+    # Stratonovich version of the same equation:
+    S = np.ones((d, d))*-0.0086
+    for i in range(0, d):
+        S[i, i] = -0.0808
+    def f_strat(y, t):
+        return np.dot(A + S, y)
+    dW = sdeint.deltaW(N-1, m, h) # shape (N-1, m)
+    # compute exact solution y for that sample path:
+    y = np.zeros((N, d))
+    y[0] = y0
+    Wn = np.zeros(m)
+    term1 = A - 0.5*np.einsum('kij,kjl', B, B)
+    for n in range(1, N):
+        tn = tspan[n]
+        Wn += dW[n-1]
+        term2 = np.einsum('kij,k', B, Wn)
+        y[n] = linalg.expm(term1*tn + term2).dot(y0)
+    # now compute approximate solution with our Ito algorithms:
+    # Wiener increments and repeated Ito integrals for that same sample path:
+    __, I = sdeint.Iwik(dW, h)
+    ySRI2 = sdeint.itoSRI2(f, G_separate, y0, tspan, dW=dW, I=I)
+    yEuler = sdeint.itoEuler(f, G, y0, tspan, dW=dW)
+    # also test our Stratonovich algorithms
+    J = I + 0.5*h  # since m==1 for this test example
+    ySRS2 = sdeint.stratSRS2(f_strat, G_separate, y0, tspan, dW=dW, J=J)
+    yKP2iS = sdeint.stratKP2iS(f_strat, G, y0, tspan, dW=dW, J=J)
+    yHeun = sdeint.stratHeun(f_strat, G, y0, tspan, dW=dW)
+    # plot (first component of) the exact and approximated paths:
+    fig0 = plt.figure()
+    plt.plot(tspan, y[:,0], 'k-', tspan, yEuler[:,0], 'b--',
+             tspan, yHeun[:,0], 'g--', tspan, ySRI2[:,0],'r:',
+             tspan, ySRS2[:,0], 'm:', tspan, yKP2iS[:,0], 'c--')
+    plt.title('sample paths component 0, with delta_t = %g s' % h)
+    plt.xlabel('time (s)')
+    plt.legend(['exact', 'itoEuler', 'stratHeun', 'itoSRI2', 'stratSRS2',
+                'stratKP2iS'])
+    fig0.show()
+    errEuler = np.linalg.norm(yEuler - y)
+    errSRI2 = np.linalg.norm(ySRI2 - y)
+    errHeun = np.linalg.norm(yHeun - y)
+    errSRS2 = np.linalg.norm(ySRS2 - y)
+    errKP2iS = np.linalg.norm(yKP2iS - y)
 
 
 def test_strat_ND_additive():
