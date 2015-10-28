@@ -96,7 +96,7 @@ def _check_args(f, G, y0, tspan, dW=None, IJ=None):
             if not callable(G[k]):
                 raise SDEValueError(message)
             Gtestk = G[k](y0, tspan[0])
-            if shape(Gtestk) != (d,):
+            if np.shape(Gtestk) != (d,):
                 raise SDEValueError(message)
             Gtest[:,k] = Gtestk
     message = """From function G, it seems m==%d. If present, the optional
