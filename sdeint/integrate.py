@@ -92,7 +92,7 @@ def _check_args(f, G, y0, tspan, dW=None, IJ=None):
         G = tuple(G)
         m = len(G)
         Gtest = np.zeros((d, m))
-        for k in range(0, m-1):
+        for k in range(0, m):
             if not callable(G[k]):
                 raise SDEValueError(message)
             Gtestk = G[k](y0, tspan[0])
@@ -430,7 +430,7 @@ def _Roessler2010_SRK2(f, G, y0, tspan, IJmethod, dW=None, IJ=None):
         Iij = I[n,:,:] # shape (m, m)
         fnh = f(Yn, tn)*h # shape (d,)
         if have_separate_g:
-            for k in range(0, m-1):
+            for k in range(0, m):
                 Gn[:,k] = G[k](Yn, tn)
         else:
             Gn = G(Yn, tn)
@@ -443,10 +443,10 @@ def _Roessler2010_SRK2(f, G, y0, tspan, IJmethod, dW=None, IJ=None):
         fn1h = f(H20, tn1)*h
         Yn1 = Yn + 0.5*(fnh + fn1h) + np.dot(Gn, Ik)
         if have_separate_g:
-            for k in range(0, m-1):
+            for k in range(0, m):
                 Yn1 += 0.5*sqrth*(G[k](H2[:,k], tn1) - G[k](H3[:,k], tn1))
         else:
-            for k in range(0, m-1):
+            for k in range(0, m):
                 Yn1 += 0.5*sqrth*(G(H2[:,k], tn1)[:,k] - G(H3[:,k], tn1)[:,k])
         y[n+1] = Yn1
     return y
@@ -548,7 +548,7 @@ def stratKP2iS(f, G, y0, tspan, Jmethod=Jkpw, gam=None, al1=None, al2=None,
         Gn = G(Yn, tn)
         Ybar = (Yn + fn*h).reshape((d, 1)) + Gn*sqrth # shape (d, m)
         sum1 = np.zeros((d,))
-        for j1 in range(0, m-1):
+        for j1 in range(0, m):
             sum1 += np.dot(G(Ybar[:,j1], tn) - Gn, Jij[j1,:])
         Vnm1 = Vn
         Vn = np.dot(Gn, Jk) + sum1/sqrth
