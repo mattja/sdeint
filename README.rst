@@ -13,8 +13,7 @@ It is because there has been 25 years of further research with better methods bu
 
 This is prototype code in python, so not aiming for speed. Later can always rewrite these with loops in C when speed is needed.
 
-Warning: this is an early pre-release. Still without proper tests and likely to give the wrong answers at this stage. Wait for version 1.0, or help me to write tests.
-Bug reports are very welcome!
+Warning: this is an early pre-release. Wait for version 1.0. Bug reports are very welcome!
 
 functions
 ---------
@@ -33,6 +32,7 @@ specific algorithms:
 | ``stratSRS2(f, G, y0, tspan)``: the Rößler2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRS2 for Stratonovich equations.
 | ``stratSRS2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G).
 | ``stratKP2iS(f, G, y0, tspan)``: the Kloeden and Platen two-step implicit order 1.0 strong algorithm for Stratonovich equations.
+| For more information and advanced options see the documentation for each function.
 
 utility functions:
 ~~~~~~~~~~~~~~~~~~
@@ -66,9 +66,9 @@ References for these algorithms:
 
 TODO
 ----
-- Write proper tests (using systems that can be solved exactly)
-
 - Rewrite ``Iwik()`` and ``Jwik()`` so they don't waste so much memory.
+
+- Fix ``stratKP2iS()``. In the unit tests it is currently less accurate than ``itoEuler()`` and this is likely due to a bug.
 
 - Implement the Ito version of the Kloeden and Platen two-step implicit alogrithm.
 
