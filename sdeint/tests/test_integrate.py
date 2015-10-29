@@ -131,7 +131,7 @@ def test_exact_KP4459(h=0.002):
     ySRI2 = sdeint.itoSRI2(f, G, y0, tspan, dW=dW, I=I)[:,0]
     yEuler = sdeint.itoEuler(f, G, y0, tspan, dW=dW)[:,0]
     # also test our Stratonovich algorithms
-    J = I + 0.5*h  # since m==1 for this test example
+    J = I + 0.5*h*np.eye(2).reshape((1, 2, 2)) # since m==2
     ySRS2 = sdeint.stratSRS2(f_strat, G, y0, tspan, dW=dW, J=J)[:,0]
     yKP2iS = sdeint.stratKP2iS(f_strat, G, y0, tspan, dW=dW, J=J)[:,0]
     yHeun = sdeint.stratHeun(f_strat, G, y0, tspan, dW=dW)[:,0]
@@ -250,7 +250,7 @@ def test_exact_R74(h=0.002, d=5, m=4):
     ySRI2 = sdeint.itoSRI2(f, G_separate, y0, tspan, dW=dW, I=I)
     yEuler = sdeint.itoEuler(f, G, y0, tspan, dW=dW)
     # also test our Stratonovich algorithms
-    J = I + 0.5*h  # since m==1 for this test example
+    J = I + 0.5*h*np.eye(m).reshape((1, m, m))
     ySRS2 = sdeint.stratSRS2(f_strat, G_separate, y0, tspan, dW=dW, J=J)
     yKP2iS = sdeint.stratKP2iS(f_strat, G, y0, tspan, dW=dW, J=J)
     yHeun = sdeint.stratHeun(f_strat, G, y0, tspan, dW=dW)
