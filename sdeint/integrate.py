@@ -565,6 +565,7 @@ def stratKP2iS(f, G, y0, tspan, Jmethod=Jkpw, gam=None, al1=None, al2=None,
         if status == 1:
             y[n+1] = Ynp1
         else:
-            raise RuntimeError("At time t_n = %g Failed to solve for Y_{n+1}" +
-                               " using args %s. Reason: %s" % (tn, args, msg))
+            m = """At time t_n = %g Failed to solve for Y_{n+1} with args %s.
+                Reason: %s""" % (tn, args, msg)
+            raise RuntimeError(m)
     return y
