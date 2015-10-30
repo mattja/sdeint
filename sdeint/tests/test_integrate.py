@@ -55,7 +55,7 @@ def test_strat_1D_additive():
 # Now for some proper tests: comparing against exactly solvable systems
 
 def _assert_close(approx_sol, exact_sol, relTol=1e-2, absTol=1e-2):
-    """Pass the test if at ALL time points simulated the approximated solution
+    """Pass the test if at ALL simulated time points the approximated solution
     from the integration algorithm matches the known exact solution to within
     either the relative tolerance or absolute tolerance."""
     if exact_sol.ndim > 1:
@@ -70,8 +70,9 @@ def _assert_close(approx_sol, exact_sol, relTol=1e-2, absTol=1e-2):
     else:
         ind = np.nonzero(~ok)[0][0]
         msg = """Sample path approximation not close enough at time step n==%d:
-              approx_sol==%s, exact_sol==%s, relTol==%g, absTol==%g""" % (
-                      ind, approx_sol[ind], exact_sol[ind], relTol, absTol)
+              exact_sol==%s, approx_sol==%s, relError==%g, absError==%g""" % (
+                      ind, exact_sol[ind], approx_sol[ind], relError[ind],
+                      absError[ind])
         raise AssertionError(msg)
 
 
