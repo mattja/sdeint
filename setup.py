@@ -37,6 +37,7 @@ setup(
     name='sdeint',
     version=find_version('sdeint', '__init__.py'),
     url='http://github.com/mattja/sdeint/',
+    bugtrack_url='https://github.com/mattja/sdeint/issues',
     license='GPLv3+',
     author='Matthew J. Aburn',
     install_requires=['numpy>=1.6'],
@@ -48,6 +49,7 @@ setup(
     packages=['sdeint'],
     platforms='any',
     zip_safe=False,
+    keywords = ['stochastic', 'differential equations', 'SDE', 'SODE'],
     classifiers = [
         'Programming Language :: Python',
         'Development Status :: 2 - Pre-Alpha',
