@@ -1,6 +1,5 @@
 sdeint
 ======
-
 | Numerical integration of Ito or Stratonovich SDEs.
 
 Overview
@@ -17,7 +16,6 @@ Warning: this is an early pre-release. Wait for version 1.0. Bug reports are ver
 
 functions
 ---------
-
 | ``itoint(f, G, y0, tspan)`` for Ito equation dy = f(y,t)dt + G(y,t)dW
 | ``stratint(f, G, y0, tspan)`` for Stratonovich equation dy = f(y,t)dt + G(y,t)∘dW
 
@@ -45,6 +43,57 @@ utility functions:
 | Repeated integrals by the method of Wiktorsson (2001):
 | ``Iwik(dW, h, n=5)``: Approximate repeated Ito integrals.
 | ``Jwik(dW, h, n=5)``: Approximate repeated Stratonovich integrals.
+
+Examples:
+---------
+| Integrate the one-dimensional Ito equation |_| |eqn1|
+| with initial condition ``x0 = 0.1``
+
+.. |eqn1| image:: https://cloud.githubusercontent.com/assets/7663625/12638687/f984ae7c-c5ea-11e5-9b99-ac173d7dfe4c.png
+   :alt: dx = -(a + x*b**2)*(1 - x**2)dt + b*(1 - x**2)dW
+.. code-block::
+
+    import numpy as np
+    import sdeint
+
+    a = 1.0
+    b = 0.8
+    tspan = np.linspace(0.0, 5.0, 5001)
+    x0 = 0.1
+
+    def f(x, t):
+        return -(a + x*b**2)*(1 - x**2)
+
+    def g(x, t):
+        return b*(1 - x**2)
+
+    result = sdeint.itoint(f, g, x0, tspan)
+
+| Integrate the two-dimensional vector Ito equation |_| |eqn2|
+| where ``x = (x1, x2)``, |_| ``dW = (dW1, dW2)`` and with initial condition ``x0 = (3.0, 3.0)``
+
+.. |eqn2| image:: https://cloud.githubusercontent.com/assets/7663625/12638691/012a861a-c5eb-11e5-805d-d704eaff00dd.png
+   :alt: dx = A.x dt + B.dW
+.. code-block::
+
+    import numpy as np
+    import sdeint
+
+    A = np.array([[-0.5, -2.0],
+                  [ 2.0, -1.0]])
+
+    B = np.diag([0.5, 0.5]) # diagonal, so independent driving Wiener processes
+
+    tspan = np.linspace(0.0, 10.0, 10001)
+    x0 = np.array([3.0, 3.0])
+
+    def f(x, t):
+        return A.dot(x)
+
+    def G(x, t):
+        return B
+
+    result = sdeint.itoint(f, G, x0, tspan)
 
 References for these algorithms:
 --------------------------------
@@ -85,3 +134,5 @@ See also:
 ---------
 
 ``nsim``: Framework that uses this ``sdeint`` library to enable massive parallel simulations of SDE systems (using multiple CPUs or a cluster) and provides some tools to analyze the resulting timeseries. https://github.com/mattja/nsim
+
+.. |_| unicode:: 0xa0
