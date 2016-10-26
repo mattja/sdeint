@@ -19,7 +19,7 @@ Usage:
 
 sdeint will choose an algorithm for you. Or you can choose one explicitly:
 
-itoEuler: the Euler Maruyama algorithm for Ito equations.
+itoEuler: the Euler-Maruyama algorithm for Ito equations.
 stratHeun: the Stratonovich Heun algorithm for Stratonovich equations.
 itoSRI2: the Roessler2010 order 1.0 strong Stochastic Runge-Kutta
   algorithm SRI2 for Ito equations.

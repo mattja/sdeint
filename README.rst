@@ -23,7 +23,7 @@ These work with scalar or vector equations. They will choose an algorithm for yo
 
 specific algorithms:
 --------------------
-| ``itoEuler(f, G, y0, tspan)``: the Euler Maruyama algorithm for Ito equations.
+| ``itoEuler(f, G, y0, tspan)``: the Euler-Maruyama algorithm for Ito equations.
 | ``stratHeun(f, G, y0, tspan)``: the Stratonovich Heun algorithm for Stratonovich equations.
 | ``itoSRI2(f, G, y0, tspan)``: the Rößler2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRI2 for Ito equations.
 | ``itoSRI2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G).
