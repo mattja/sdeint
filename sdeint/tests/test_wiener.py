@@ -77,7 +77,7 @@ def test_K():
     for q in range(2, 10):
       P0 = _P(q)
       K0 = _K(q)
-      M = q*(q-1)/2
+      M = q*(q-1)//2
       Iqs = np.eye(q**2)
       IM = np.eye(M)
       assert(np.allclose(np.dot(K0, K0.T), IM))
@@ -113,7 +113,7 @@ def test_Ikpw_Jkpw_identities():
 def test_Iwik_Jwik_identities():
     dW = deltaW(N, m, h).reshape((N, m, 1))
     Atilde, I = Iwik(dW, h)
-    M = m*(m-1)/2
+    M = m*(m-1)//2
     assert(Atilde.shape == (N, M, 1) and I.shape == (N, m, m))
     Im = broadcast_to(np.eye(m), (N, m, m))
     assert(np.allclose(I + _t(I), _dot(dW, _t(dW)) - h*Im))

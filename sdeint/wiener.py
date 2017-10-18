@@ -186,7 +186,7 @@ def _P(m):
 
 def _K(m):
     """ matrix K_m from Wiktorsson2001 """
-    M = m*(m - 1)/2
+    M = m*(m - 1)//2
     K = np.zeros((M, m**2), dtype=np.int64)
     row = 0
     for j in range(1, m):
@@ -199,7 +199,7 @@ def _K(m):
 
 def _AtildeTerm(N, h, m, k, dW, Km0, Pm0):
     """kth term in the sum for Atilde (Wiktorsson2001 p481, 1st eqn)"""
-    M = m*(m-1)/2
+    M = m*(m-1)//2
     Xk = np.random.normal(0.0, 1.0, (N, m, 1))
     Yk = np.random.normal(0.0, 1.0, (N, m, 1))
     factor1 = np.dot(Km0, Pm0 - np.eye(m**2))
@@ -210,7 +210,7 @@ def _AtildeTerm(N, h, m, k, dW, Km0, Pm0):
 
 def _sigmainf(N, h, m, dW, Km0, Pm0):
     """Asymptotic covariance matrix \Sigma_\infty  Wiktorsson2001 eqn (4.5)"""
-    M = m*(m-1)/2
+    M = m*(m-1)//2
     Im = broadcast_to(np.eye(m), (N, m, m))
     IM = broadcast_to(np.eye(M), (N, M, M))
     Ims0 = np.eye(m**2)
@@ -237,7 +237,7 @@ def Iwik(dW, h, n=5):
 
     Returns:
       (Atilde, I) where
-        Atilde: array of shape (N, m(m-1)/2, 1) giving the area integrals used.
+        Atilde: array of shape (N,m(m-1)//2,1) giving the area integrals used.
         I: array of shape (N, m, m) giving an m x m matrix of repeated Ito
         integral values for each of the N time intervals.
     """
@@ -251,7 +251,7 @@ def Iwik(dW, h, n=5):
         return (np.zeros((N, 1, 1)), (dW*dW - h)/2.0)
     Pm0 = _P(m)
     Km0 = _K(m)
-    M = m*(m-1)/2
+    M = m*(m-1)//2
     Atilde_n = _AtildeTerm(N, h, m, 1, dW, Km0, Pm0)
     for k in range(2, n+1):
         Atilde_n += _AtildeTerm(N, h, m, k, dW, Km0, Pm0)
@@ -285,7 +285,7 @@ def Jwik(dW, h, n=5):
 
     Returns:
       (Atilde, J) where
-        Atilde: array of shape (N, m(m-1)/2, 1) giving the area integrals used.
+        Atilde: array of shape (N,m(m-1)//2,1) giving the area integrals used.
         J: array of shape (N, m, m) giving an m x m matrix of repeated
         Stratonovich integral values for each of the N time intervals.
     """
