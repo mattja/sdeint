@@ -116,7 +116,28 @@ def _check_args(f, G, y0, tspan, dW=None, IJ=None):
 
 
 def itoint(f, G, y0, tspan):
-    """ Numerically integrate Ito equation  dy = f dt + G dW
+    """ Numerically integrate the Ito equation  dy = f(y,t)dt + G(y,t)dW
+
+    where y is the d-dimensional state vector, f is a vector-valued function,
+    G is an d x m matrix-valued function giving the noise coefficients and
+    dW(t) = (dW_1, dW_2, ... dW_m) is a vector of independent Wiener increments
+
+    Args:
+      f: callable(y,t) returning a numpy array of shape (d,)
+         Vector-valued function to define the deterministic part of the system
+      G: callable(y,t) returning a numpy array of shape (d,m)
+         Matrix-valued function to define the noise coefficients of the system
+      y0: array of shape (d,) giving the initial state vector y(t==0)
+      tspan (array): The sequence of time points for which to solve for y.
+        These must be equally spaced, e.g. np.arange(0,10,0.005)
+        tspan[0] is the intial time corresponding to the initial state y0.
+
+    Returns:
+      y: array, with shape (len(tspan), len(y0))
+         With the initial value y0 in the first row
+
+    Raises:
+      SDEValueError
     """
     # In future versions we can automatically choose here the most suitable
     # Ito algorithm based on properties of the system and noise.
@@ -126,7 +147,28 @@ def itoint(f, G, y0, tspan):
 
 
 def stratint(f, G, y0, tspan):
-    """ Numerically integrate Stratonovich equation  dy = f dt + G \circ dW
+    """ Numerically integrate Stratonovich equation dy = f(y,t)dt + G(y,t).dW
+
+    where y is the d-dimensional state vector, f is a vector-valued function,
+    G is an d x m matrix-valued function giving the noise coefficients and
+    dW(t) = (dW_1, dW_2, ... dW_m) is a vector of independent Wiener increments
+
+    Args:
+      f: callable(y,t) returning a numpy array of shape (d,)
+         Vector-valued function to define the deterministic part of the system
+      G: callable(y,t) returning a numpy array of shape (d,m)
+         Matrix-valued function to define the noise coefficients of the system
+      y0: array of shape (d,) giving the initial state vector y(t==0)
+      tspan (array): The sequence of time points for which to solve for y.
+        These must be equally spaced, e.g. np.arange(0,10,0.005)
+        tspan[0] is the intial time corresponding to the initial state y0.
+
+    Returns:
+      y: array, with shape (len(tspan), len(y0))
+         With the initial value y0 in the first row
+
+    Raises:
+      SDEValueError
     """
     # In future versions we can automatically choose here the most suitable
     # Stratonovich algorithm based on properties of the system and noise.
