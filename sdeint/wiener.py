@@ -5,7 +5,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version. See <http://www.gnu.org/licenses/>.
 
-"""
+r"""
 Simulation of standard multiple stochastic integrals, both Ito and Stratonovich
 I_{ij}(t) = \int_{0}^{t}\int_{0}^{s} dW_i(u) dW_j(s)  (Ito)
 J_{ij}(t) = \int_{0}^{t}\int_{0}^{s} \circ dW_i(u) \circ dW_j(s)  (Stratonovich)
@@ -56,7 +56,7 @@ def _t(a):
 
 
 def _dot(a, b):
-    """ for rank 3 arrays a and b, return \sum_k a_ij^k . b_ik^l (no sum on i)
+    r""" for rank 3 arrays a and b, return \sum_k a_ij^k . b_ik^l (no sum on i)
     i.e. This is just normal matrix multiplication at each point on first axis
     """
     return np.einsum('ijk,ikl->ijl', a, b)
@@ -209,7 +209,7 @@ def _AtildeTerm(N, h, m, k, dW, Km0, Pm0):
 
 
 def _sigmainf(N, h, m, dW, Km0, Pm0):
-    """Asymptotic covariance matrix \Sigma_\infty  Wiktorsson2001 eqn (4.5)"""
+    r"""Asymptotic covariance matrix \Sigma_\infty  Wiktorsson2001 eqn (4.5)"""
     M = m*(m-1)//2
     Im = broadcast_to(np.eye(m), (N, m, m))
     IM = broadcast_to(np.eye(M), (N, M, M))
@@ -221,7 +221,7 @@ def _sigmainf(N, h, m, dW, Km0, Pm0):
 
 
 def _a(n):
-    """ \sum_{n+1}^\infty 1/k^2 """
+    r""" \sum_{n+1}^\infty 1/k^2 """
     return np.pi**2/6.0 - sum(1.0/k**2 for k in range(1, n+1))
 
 

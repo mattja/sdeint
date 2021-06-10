@@ -5,7 +5,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version. See <http://www.gnu.org/licenses/>.
 
-"""Numerical integration algorithms for Ito and Stratonovich stochastic
+r"""Numerical integration algorithms for Ito and Stratonovich stochastic
 ordinary differential equations.
 
 Usage:
@@ -227,7 +227,7 @@ def itoEuler(f, G, y0, tspan, dW=None):
 
 
 def stratHeun(f, G, y0, tspan, dW=None):
-    """Use the Stratonovich Heun algorithm to integrate Stratonovich equation
+    r"""Use the Stratonovich Heun algorithm to integrate Stratonovich equation
     dy = f(y,t)dt + G(y,t) \circ dW(t)
 
     where y is the d-dimensional state vector, f is a vector-valued function,
@@ -348,7 +348,7 @@ def itoSRI2(f, G, y0, tspan, Imethod=Ikpw, dW=None, I=None):
 
 
 def stratSRS2(f, G, y0, tspan, Jmethod=Jkpw, dW=None, J=None):
-    """Use the Roessler2010 order 1.0 strong Stochastic Runge-Kutta algorithm
+    r"""Use the Roessler2010 order 1.0 strong Stochastic Runge-Kutta algorithm
     SRS2 to integrate a Stratonovich equation dy = f(y,t)dt + G(y,t)\circ dW(t)
 
     where y is d-dimensional vector variable, f is a vector-valued function,
@@ -496,7 +496,7 @@ def _Roessler2010_SRK2(f, G, y0, tspan, IJmethod, dW=None, IJ=None):
 
 def stratKP2iS(f, G, y0, tspan, Jmethod=Jkpw, gam=None, al1=None, al2=None,
                rtol=1e-4, dW=None, J=None):
-    """Use the Kloeden and Platen two-step implicit order 1.0 strong algorithm
+    r"""Use the Kloeden and Platen two-step implicit order 1.0 strong algorithm
     to integrate a Stratonovich equation dy = f(y,t)dt + G(y,t)\circ dW(t)
 
     This semi-implicit algorithm may be useful for stiff systems. The noise
