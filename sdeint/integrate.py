@@ -75,6 +75,9 @@ def _check_args(f, G, y0, tspan, dW=None, IJ=None):
     else:
         # Convert initial conditions to an ndarray in case they are not already
         y0 = np.array(y0)
+        # If initial conditions are integers, assume float64 was intended.
+        if y0.dtype.kind == 'i':
+            y0 = np.array(y0, dtype=np.float64)
     # determine dimension d of the system
     d = len(y0)
     if len(f(y0, tspan[0])) != d:
