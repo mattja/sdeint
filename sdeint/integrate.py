@@ -72,6 +72,9 @@ def _check_args(f, G, y0, tspan, dW=None, IJ=None):
             f = make_vector_fn(f)
         if isinstance(G(y0_orig, tspan[0]), numbers.Number):
             G = make_matrix_fn(G)
+    else:
+        # Convert initial conditions to an ndarray in case they are not already
+        y0 = np.array(y0)
     # determine dimension d of the system
     d = len(y0)
     if len(f(y0, tspan[0])) != d:
@@ -213,7 +216,7 @@ def itoEuler(f, G, y0, tspan, dW=None):
     N = len(tspan)
     h = (tspan[N-1] - tspan[0])/(N - 1)
     # allocate space for result
-    y = np.zeros((N, d), dtype=type(y0[0]))
+    y = np.zeros((N, d), dtype=y0.dtype)
     if dW is None:
         # pre-generate Wiener increments (for m independent Wiener processes):
         dW = deltaW(N - 1, m, h)
@@ -266,7 +269,7 @@ def stratHeun(f, G, y0, tspan, dW=None):
     N = len(tspan)
     h = (tspan[N-1] - tspan[0])/(N - 1)
     # allocate space for result
-    y = np.zeros((N, d), dtype=type(y0[0]))
+    y = np.zeros((N, d), dtype=y0.dtype)
     if dW is None:
         # pre-generate Wiener increments (for m independent Wiener processes):
         dW = deltaW(N - 1, m, h)
@@ -459,7 +462,7 @@ def _Roessler2010_SRK2(f, G, y0, tspan, IJmethod, dW=None, IJ=None):
     else:
         I = IJ
     # allocate space for result
-    y = np.zeros((N, d), dtype=type(y0[0]))
+    y = np.zeros((N, d), dtype=y0.dtype)
     y[0] = y0;
     Gn = np.zeros((d, m), dtype=y.dtype)
     for n in range(0, N-1):
@@ -566,7 +569,7 @@ def stratKP2iS(f, G, y0, tspan, Jmethod=Jkpw, gam=None, al1=None, al2=None,
         # pre-generate repeated Stratonovich integrals for each time step
         __, J = Jmethod(dW, h) # shape (N, m, m)
     # allocate space for result
-    y = np.zeros((N, d), dtype=type(y0[0]))
+    y = np.zeros((N, d), dtype=y0.dtype)
     def _imp(Ynp1, Yn, Ynm1, Vn, Vnm1, tnp1, tn, tnm1, fn, fnm1):
         """At each step we will solve _imp(Ynp1, ...) == 0 for Ynp1.
         The meaning of these arguments is: Y_{n+1}, Y_n, Y_{n-1}, V_n, V_{n-1},
