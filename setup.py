@@ -40,8 +40,8 @@ setup(
     bugtrack_url='https://github.com/mattja/sdeint/issues',
     license='GPLv3+',
     author='Matthew J. Aburn',
-    install_requires=['numpy>=1.6'],
-    tests_require=['tox', 'scipy>=0.13'],
+    install_requires=['numpy>=1.17'],
+    tests_require=['tox', 'scipy>=1.3'],
     cmdclass = {'test': Tox},
     author_email='mattja6@gmail.com',
     description='Numerical integration of stochastic differential equations (SDE)',
@@ -52,11 +52,11 @@ setup(
     keywords = ['stochastic', 'differential equations', 'SDE', 'SODE'],
     classifiers = [
         'Programming Language :: Python',
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering',
         ],
-    extras_require={'implicit_algorithms': ['scipy>=0.13']}
+    extras_require={'implicit_algorithms': ['scipy>=1.3']}
 )

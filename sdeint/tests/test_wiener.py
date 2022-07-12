@@ -3,14 +3,8 @@
 
 import pytest
 import numpy as np
-from sdeint.wiener import (deltaW, _t, _dot, Ikpw, Jkpw, Iwik, Jwik, _vec, 
+from sdeint.wiener import (deltaW, _t, _dot, Ikpw, Jkpw, Iwik, Jwik, _vec,
                            _unvec, _kp, _kp2, _P, _K, _a)
-
-numpy_version = list(map(int, np.version.short_version.split('.')))
-if numpy_version >= [1,10,0]:
-    broadcast_to = np.broadcast_to
-else:
-    from sdeint._broadcast import broadcast_to
 
 
 s = np.random.randint(2**32)
@@ -64,7 +58,7 @@ def test_P():
     assert(Pm0.shape == (m**2, m**2))
     assert(np.allclose(Pm0, Pm0.T)) # symmetric
     assert(np.allclose(np.dot(Pm0, Pm0), np.eye(m**2))) # is its own inverse
-    Pm = broadcast_to(Pm0, (N, m**2, m**2))
+    Pm = np.broadcast_to(Pm0, (N, m**2, m**2))
     for n in range(0, N):
         assert(np.allclose(np.dot(Pm0, np.kron(X[n,:,0], Y[n,:,0])),
                            np.kron(Y[n,:,0], X[n,:,0])))
@@ -99,7 +93,7 @@ def test_Ikpw_Jkpw_identities():
     dW = deltaW(N, m, h).reshape((N, m, 1))
     A, I = Ikpw(dW, h)
     assert(A.shape == (N, m, m) and I.shape == (N, m, m))
-    Im = broadcast_to(np.eye(m), (N, m, m))
+    Im = np.broadcast_to(np.eye(m), (N, m, m))
     assert(np.allclose(I + _t(I), _dot(dW, _t(dW)) - h*Im))
     assert(np.allclose(A, -_t(A)))
     assert(np.allclose(2.0*(I - A), _dot(dW, _t(dW)) - h*Im))
@@ -115,12 +109,12 @@ def test_Iwik_Jwik_identities():
     Atilde, I = Iwik(dW, h)
     M = m*(m-1)//2
     assert(Atilde.shape == (N, M, 1) and I.shape == (N, m, m))
-    Im = broadcast_to(np.eye(m), (N, m, m))
+    Im = np.broadcast_to(np.eye(m), (N, m, m))
     assert(np.allclose(I + _t(I), _dot(dW, _t(dW)) - h*Im))
     # can get A from Atilde: (Wiktorsson2001 equation between (4.3) and (4.4))
-    Ims = broadcast_to(np.eye(m*m), (N, m*m, m*m))
-    Pm = broadcast_to(_P(m), (N, m*m, m*m))
-    Km = broadcast_to(_K(m), (N, M, m*m))
+    Ims = np.broadcast_to(np.eye(m*m), (N, m*m, m*m))
+    Pm = np.broadcast_to(_P(m), (N, m*m, m*m))
+    Km = np.broadcast_to(_K(m), (N, M, m*m))
     A = _unvec(_dot(_dot((Ims - Pm), _t(Km)), Atilde))
     # now can test this A against the identities of Wiktorsson eqn (2.1)
     assert(np.allclose(A, -_t(A)))
