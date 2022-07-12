@@ -16,11 +16,13 @@ import numpy as np
 import sdeint
 from scipy import stats, linalg
 
-s = np.random.randint(2**32)
-np.random.seed(s)
+
+ss = np.random.SeedSequence()
+generator = np.random.default_rng(ss)
+
 
 def pytest_report_header(config):
-    return 'Testing using random seed %d' % s
+    return 'Testing using random seed %d' % ss.entropy
 
 
 def test_mismatched_f():
@@ -37,7 +39,7 @@ def test_ito_1D_additive():
     y0 = 0.0
     f = lambda y, t: -1.0 * y
     G = lambda y, t: 0.2
-    y = sdeint.itoint(f, G, y0, tspan)
+    y = sdeint.itoint(f, G, y0, tspan, generator)
     assert(np.isclose(np.mean(y), 0.0, rtol=0, atol=1e-02))
     assert(np.isclose(np.var(y), 0.2*0.2/2, rtol=1e-01, atol=0))
 
@@ -47,7 +49,7 @@ def test_strat_1D_additive():
     y0 = 0.0
     f = lambda y, t: -1.0 * y
     G = lambda y, t: 0.2
-    y = sdeint.stratint(f, G, y0, tspan)
+    y = sdeint.stratint(f, G, y0, tspan, generator)
     assert(np.isclose(np.mean(y), 0.0, rtol=0, atol=1e-02))
     assert(np.isclose(np.var(y), 0.2*0.2/2, rtol=1e-01, atol=0))
 
@@ -97,8 +99,8 @@ def exact_solution_KP4446():
     def f_strat(y, t):
         return -a*(1 - y**2)
     # Generate Wiener increments and repeated integrals for one sample path:
-    dW = sdeint.deltaW(N-1, 1, h)
-    __, I = sdeint.Iwik(dW, h) # Ito repeated integrals
+    dW = sdeint.deltaW(N-1, 1, h, generator)
+    __, I = sdeint.Iwik(dW, h, generator=generator) # Ito repeated integrals
     J = I + 0.5*h  # Stratonovich repeated integrals (m==1)
     # Compute exact solution y for that sample path:
     y = np.zeros(N)
@@ -183,8 +185,8 @@ def exact_solution_KP4459():
     def f_strat(y, t):
         return np.array([(a - (b1**2 + b2**2)/2.0)*y[0]])
     # Generate Wiener increments and repeated integrals for one sample path:
-    dW = sdeint.deltaW(N-1, 2, h)
-    __, I = sdeint.Iwik(dW, h)
+    dW = sdeint.deltaW(N-1, 2, h, generator)
+    __, I = sdeint.Iwik(dW, h, generator=generator)
     J = I + 0.5*h*np.eye(2).reshape((1, 2, 2)) # since m==2
     # compute exact solution y for that sample path:
     y = np.zeros(N)
@@ -273,10 +275,10 @@ def exact_solution_KPS445():
                       [ewq     , ezq     , eq2]])
     distribution = stats.multivariate_normal(mean=np.zeros(3), cov=covar,
                                              allow_singular=True)
-    WZQ = distribution.rvs(size=N-1) # shape (N-1, 3)
+    WZQ = distribution.rvs(size=N-1, random_state=generator) # shape (N-1, 3)
     # Wiener increments and repeated integrals for that sample path:
     dW = WZQ[:,0:1]
-    __, I = sdeint.Iwik(dW, h)
+    __, I = sdeint.Iwik(dW, h, generator=generator)
     J = I + 0.5*h  # since m==1
     # compute exact solution y for that sample path:
     y = np.zeros(N)
@@ -372,8 +374,8 @@ def exact_solution_R74():
     def f_strat(y, t):
         return np.dot(A + S, y)
     # Generate Wiener increments and repeated integrals for one sample path:
-    dW = sdeint.deltaW(N-1, m, h) # shape (N-1, m)
-    __, I = sdeint.Iwik(dW, h)
+    dW = sdeint.deltaW(N-1, m, h, generator) # shape (N-1, m)
+    __, I = sdeint.Iwik(dW, h, generator=generator)
     J = I + 0.5*h*np.eye(m).reshape((1, m, m))
     # compute exact solution y for that sample path:
     y = np.zeros((N, d))
@@ -449,7 +451,7 @@ def test_strat_ND_additive():
                           -1.0*y[1] - 0.4*y[2] ])
     def G(y, t):
         return np.diag([0.2, 0.0, 0.5])
-    y = sdeint.stratint(f, G, y0, tspan)
+    y = sdeint.stratint(f, G, y0, tspan, generator=generator)
     w = np.fft.rfft(y[:, 2])
     # TODO assert spectral peak is around 1.0 radians/s
 
@@ -459,7 +461,7 @@ def test_itoEuler_1D_additive():
     y0 = 0.0
     f = lambda y, t: -1.0 * y
     G = lambda y, t: 0.2
-    y = sdeint.itoEuler(f, G, y0, tspan)
+    y = sdeint.itoEuler(f, G, y0, tspan, generator=generator)
     assert(np.isclose(np.mean(y), 0.0, rtol=0, atol=1e-02))
     assert(np.isclose(np.var(y), 0.2*0.2/2, rtol=1e-01, atol=0))
 
@@ -473,7 +475,7 @@ def test_stratHeun_ND_additive():
                           -1.0*y[1] - 0.4*y[2] ])
     def G(y, t):
         return np.diag([0.2, 0.0, 0.5])
-    y = sdeint.stratHeun(f, G, y0, tspan)
+    y = sdeint.stratHeun(f, G, y0, tspan, generator=generator)
     w = np.fft.rfft(y[:, 2])
     # TODO assert spectral peak is around 1.0 radians/s
 
@@ -483,6 +485,6 @@ def test_stratKP2iS_1D_additive():
     y0 = 0.0
     f = lambda y, t: -1.0 * y
     G = lambda y, t: 0.2
-    y = sdeint.stratKP2iS(f, G, y0, tspan)
+    y = sdeint.stratKP2iS(f, G, y0, tspan, generator=generator)
     assert(np.isclose(np.mean(y), 0.0, rtol=0, atol=1e-02))
     assert(np.isclose(np.var(y), 0.2*0.2/2, rtol=1e-01, atol=0))

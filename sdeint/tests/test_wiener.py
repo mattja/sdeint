@@ -7,13 +7,16 @@ from sdeint.wiener import (deltaW, _t, _dot, Ikpw, Jkpw, Iwik, Jwik, _vec,
                            _unvec, _kp, _kp2, _P, _K, _a)
 
 
-s = np.random.randint(2**32)
-print('Testing using random seed %d' % s)
-np.random.seed(s)
+ss = np.random.SeedSequence()
+generator = np.random.default_rng(ss)
 
 N = 10000
 h = 0.002
 m = 8
+
+
+def pytest_report_header(config):
+    return 'Testing using random seed %d' % ss.entropy
 
 
 def test_vec_unvec():
@@ -27,8 +30,8 @@ def test_kp():
     """Test our special case Kronecker tensor product function _kp() by
     comparing it against the built-in numpy function np.kron()
     """
-    X = np.random.normal(0.0, 1.0, (N, m, 1))
-    Y = np.random.normal(0.0, 1.0, (N, m, 1))
+    X = generator.standard_normal((N, m, 1))
+    Y = generator.standard_normal((N, m, 1))
     XkY = _kp(X, Y)
     for n in range(0, N):
         assert(np.allclose(np.kron(X[n,:,0], Y[n,:,0]), XkY[n,:,0]))
@@ -42,8 +45,8 @@ def test_kp2():
         for j in range(1, 20, 3):
             for k in range(1, 50, 10):
                 for l in range(1, 40, 7):
-                    A = np.random.normal(0.0, 1.0, (10, i, j))
-                    B = np.random.normal(0.0, 1.0, (10, k, l))
+                    A = generator.standard_normal((10, i, j))
+                    B = generator.standard_normal((10, k, l))
                     AkB = _kp2(A, B)
                     for n in range(0, 10):
                         assert(np.allclose(np.kron(A[n,:,:], B[n,:,:]),
@@ -53,8 +56,8 @@ def test_kp2():
 def test_P():
     """Test permutation matrix _P(m)"""
     Pm0 = _P(m)
-    X = np.random.normal(0.0, 1.0, (N, m, 1))
-    Y = np.random.normal(0.0, 1.0, (N, m, 1))
+    X = generator.standard_normal((N, m, 1))
+    Y = generator.standard_normal((N, m, 1))
     assert(Pm0.shape == (m**2, m**2))
     assert(np.allclose(Pm0, Pm0.T)) # symmetric
     assert(np.allclose(np.dot(Pm0, Pm0), np.eye(m**2))) # is its own inverse
@@ -90,23 +93,23 @@ def test_a():
 
 def test_Ikpw_Jkpw_identities():
     """Test the relations given in Wiktorsson2001 equation (2.1)"""
-    dW = deltaW(N, m, h).reshape((N, m, 1))
-    A, I = Ikpw(dW, h)
+    dW = deltaW(N, m, h, generator).reshape((N, m, 1))
+    A, I = Ikpw(dW, h, generator=generator)
     assert(A.shape == (N, m, m) and I.shape == (N, m, m))
     Im = np.broadcast_to(np.eye(m), (N, m, m))
     assert(np.allclose(I + _t(I), _dot(dW, _t(dW)) - h*Im))
     assert(np.allclose(A, -_t(A)))
     assert(np.allclose(2.0*(I - A), _dot(dW, _t(dW)) - h*Im))
     # and tests for Stratonovich case
-    A, J = Jkpw(dW, h)
+    A, J = Jkpw(dW, h, generator=generator)
     assert(A.shape == (N, m, m) and J.shape == (N, m, m))
     assert(np.allclose(J + _t(J), _dot(dW, _t(dW))))
     assert(np.allclose(2.0*(J - A), _dot(dW, _t(dW))))
 
 
 def test_Iwik_Jwik_identities():
-    dW = deltaW(N, m, h).reshape((N, m, 1))
-    Atilde, I = Iwik(dW, h)
+    dW = deltaW(N, m, h, generator).reshape((N, m, 1))
+    Atilde, I = Iwik(dW, h, generator=generator)
     M = m*(m-1)//2
     assert(Atilde.shape == (N, M, 1) and I.shape == (N, m, m))
     Im = np.broadcast_to(np.eye(m), (N, m, m))
@@ -120,7 +123,7 @@ def test_Iwik_Jwik_identities():
     assert(np.allclose(A, -_t(A)))
     assert(np.allclose(2.0*(I - A), _dot(dW, _t(dW)) - h*Im))
     # and tests for Stratonovich case
-    Atilde, J = Jwik(dW, h)
+    Atilde, J = Jwik(dW, h, generator=generator)
     assert(Atilde.shape == (N, M, 1) and J.shape == (N, m, m))
     assert(np.allclose(J + _t(J), _dot(dW, _t(dW))))
     A = _unvec(_dot(_dot((Ims - Pm), _t(Km)), Atilde))
