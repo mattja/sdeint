@@ -30,19 +30,20 @@ specific algorithms:
 | ``stratSRS2(f, G, y0, tspan)``: the Rößler2010 order 1.0 strong Stochastic Runge-Kutta algorithm SRS2 for Stratonovich equations.
 | ``stratSRS2(f, [g1,...,gm], y0, tspan)``: as above, with G matrix given as a separate function for each column (gives speedup for large m or complicated G).
 | ``stratKP2iS(f, G, y0, tspan)``: the Kloeden and Platen two-step implicit order 1.0 strong algorithm for Stratonovich equations.
-| For more information and advanced options see the documentation for each function.
+
+For more information and advanced options for controlling random value generation and repeated integrals see the documentation for each function.
 
 utility functions:
 ~~~~~~~~~~~~~~~~~~
-| ``deltaW(N, m, h)``: Generate increments of m independent Wiener processes for each of N time intervals of length h.
+| ``deltaW(N, m, h, generator=None)``: Generate increments of m independent Wiener processes for each of N time intervals of length h. Optionally provide a `numpy.random.Generator` instance to use.
 
 | Repeated integrals by the method of Kloeden, Platen and Wright (1992):
-| ``Ikpw(dW, h, n=5)``: Approximate repeated Ito integrals.
-| ``Jkpw(dW, h, n=5)``: Approximate repeated Stratonovich integrals.
+| ``Ikpw(dW, h, n=5, generator=None)``: Approximate repeated Ito integrals.
+| ``Jkpw(dW, h, n=5, generator=None)``: Approximate repeated Stratonovich integrals.
 
 | Repeated integrals by the method of Wiktorsson (2001):
-| ``Iwik(dW, h, n=5)``: Approximate repeated Ito integrals.
-| ``Jwik(dW, h, n=5)``: Approximate repeated Stratonovich integrals.
+| ``Iwik(dW, h, n=5, generator=None)``: Approximate repeated Ito integrals.
+| ``Jwik(dW, h, n=5, generator=None)``: Approximate repeated Stratonovich integrals.
 
 Examples:
 ---------
@@ -115,6 +116,8 @@ References for these algorithms:
 
 TODO
 ----
+- Fast, parallel GPU implementation in C++, wrapped with this python interface.
+
 - Rewrite ``Iwik()`` and ``Jwik()`` so they don't waste so much memory.
 
 - Fix ``stratKP2iS()``. In the unit tests it is currently less accurate than ``itoEuler()`` and this is likely due to a bug.
@@ -126,13 +129,11 @@ TODO
 
 - Currently prioritizing those algorithms that work for very general d-dimensional systems with arbitrary noise coefficient matrix, and which are derivative free. Eventually will add special case algorithms that give a speed increase for systems with certain symmetries. That is, 1-dimensional systems, systems with scalar noise, diagonal noise or commutative noise, etc. The idea is that ``itoint()`` and ``stratint()`` will detect these situations and dispatch to the most suitable algorithm.
 
-- Eventually implement the main loops in C for speed.
-
 - Some time in the dim future, implement support for stochastic delay differential equations (SDDEs).
 
 See also:
 ---------
 
-``nsim``: Framework that uses this ``sdeint`` library to enable massive parallel simulations of SDE systems (using multiple CPUs or a cluster) and provides some tools to analyze the resulting timeseries. https://github.com/mattja/nsim
+``nsim``: Framework that uses this ``sdeint`` library to enable massive parallel simulations of SDE systems (using multiple CPUs or a cluster) and provides some tools to analyze the resulting timeseries. https://github.com/mattja/nsim For parallel simulation this will be obsoleted by the GPU implementation in development.
 
 .. |_| unicode:: 0xa0

@@ -1,4 +1,4 @@
-# Copyright 2015 Matthew J. Aburn
+# Copyright 2015-2022 Matthew J. Aburn
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,15 +39,23 @@ else:
     from ._broadcast import broadcast_to
 
 
-def deltaW(N, m, h):
+def deltaW(N, m, h, generator=None):
     """Generate sequence of Wiener increments for m independent Wiener
-    processes W_j(t) j=0..m-1 for each of N time intervals of length h.    
+    processes W_j(t) j=0..m-1 for each of N time intervals of length h.
+
+    Args:
+      N (int): number of time steps
+      m (int): number of Wiener processes
+      h (float): the time step size
+      generator (numpy.random.Generator, optional)
 
     Returns:
       dW (array of shape (N, m)): The [n, j] element has the value
-      W_j((n+1)*h) - W_j(n*h) 
+      W_j((n+1)*h) - W_j(n*h)
     """
-    return np.random.normal(0.0, np.sqrt(h), (N, m))
+    if generator is None:
+        generator = np.random.default_rng()
+    return generator.normal(0.0, np.sqrt(h), (N, m))
 
 
 def _t(a):
@@ -62,17 +70,17 @@ def _dot(a, b):
     return np.einsum('ijk,ikl->ijl', a, b)
 
 
-def _Aterm(N, h, m, k, dW):
+def _Aterm(N, h, m, k, dW, generator):
     """kth term in the sum of Wiktorsson2001 equation (2.2)"""
     sqrt2h = np.sqrt(2.0/h)
-    Xk = np.random.normal(0.0, 1.0, (N, m, 1))
-    Yk = np.random.normal(0.0, 1.0, (N, m, 1))
+    Xk = generator.standard_normal((N, m, 1))
+    Yk = generator.standard_normal((N, m, 1))
     term1 = _dot(Xk, _t(Yk + sqrt2h*dW))
     term2 = _dot(Yk + sqrt2h*dW, _t(Xk))
     return (term1 - term2)/k
 
 
-def Ikpw(dW, h, n=5):
+def Ikpw(dW, h, n=5, generator=None):
     """matrix I approximating repeated Ito integrals for each of N time
     intervals, based on the method of Kloeden, Platen and Wright (1992).
 
@@ -81,29 +89,32 @@ def Ikpw(dW, h, n=5):
         each time step N. (You can make this array using sdeint.deltaW())
       h (float): the time step size
       n (int, optional): how many terms to take in the series expansion
+      generator (numpy.random.Generator, optional)
 
     Returns:
       (A, I) where
         A: array of shape (N, m, m) giving the Levy areas that were used.
-        I: array of shape (N, m, m) giving an m x m matrix of repeated Ito 
+        I: array of shape (N, m, m) giving an m x m matrix of repeated Ito
         integral values for each of the N time intervals.
     """
+    if generator is None:
+        generator = np.random.default_rng()
     N = dW.shape[0]
     m = dW.shape[1]
     if dW.ndim < 3:
         dW = dW.reshape((N, -1, 1)) # change to array of shape (N, m, 1)
     if dW.shape[2] != 1 or dW.ndim > 3:
         raise(ValueError)
-    A = _Aterm(N, h, m, 1, dW)
+    A = _Aterm(N, h, m, 1, dW, generator)
     for k in range(2, n+1):
-        A += _Aterm(N, h, m, k, dW)
+        A += _Aterm(N, h, m, k, dW, generator)
     A = (h/(2.0*np.pi))*A
     I = 0.5*(_dot(dW, _t(dW)) - np.diag(h*np.ones(m))) + A
     dW = dW.reshape((N, -1)) # change back to shape (N, m)
     return (A, I)
 
 
-def Jkpw(dW, h, n=5):
+def Jkpw(dW, h, n=5, generator=None):
     """matrix J approximating repeated Stratonovich integrals for each of N
     time intervals, based on the method of Kloeden, Platen and Wright (1992).
 
@@ -112,6 +123,7 @@ def Jkpw(dW, h, n=5):
         each time step N. (You can make this array using sdeint.deltaW())
       h (float): the time step size
       n (int, optional): how many terms to take in the series expansion
+      generator (numpy.random.Generator, optional)
 
     Returns:
       (A, J) where
@@ -120,7 +132,7 @@ def Jkpw(dW, h, n=5):
         Stratonovich integral values for each of the N time intervals.
     """
     m = dW.shape[1]
-    A, I = Ikpw(dW, h, n)
+    A, I = Ikpw(dW, h, n, generator)
     J = I + 0.5*h*np.eye(m).reshape((1, m, m))
     return (A, J)
 
@@ -197,11 +209,11 @@ def _K(m):
     return K
 
 
-def _AtildeTerm(N, h, m, k, dW, Km0, Pm0):
+def _AtildeTerm(N, h, m, k, dW, Km0, Pm0, generator):
     """kth term in the sum for Atilde (Wiktorsson2001 p481, 1st eqn)"""
     M = m*(m-1)//2
-    Xk = np.random.normal(0.0, 1.0, (N, m, 1))
-    Yk = np.random.normal(0.0, 1.0, (N, m, 1))
+    Xk = generator.standard_normal((N, m, 1))
+    Yk = generator.standard_normal((N, m, 1))
     factor1 = np.dot(Km0, Pm0 - np.eye(m**2))
     factor1 = broadcast_to(factor1, (N, M, m**2))
     factor2 = _kp(Yk + np.sqrt(2.0/h)*dW, Xk)
@@ -225,7 +237,7 @@ def _a(n):
     return np.pi**2/6.0 - sum(1.0/k**2 for k in range(1, n+1))
 
 
-def Iwik(dW, h, n=5):
+def Iwik(dW, h, n=5, generator=None):
     """matrix I approximating repeated Ito integrals for each of N time
     intervals, using the method of Wiktorsson (2001).
 
@@ -234,6 +246,7 @@ def Iwik(dW, h, n=5):
         each time step N. (You can make this array using sdeint.deltaW())
       h (float): the time step size
       n (int, optional): how many terms to take in the series expansion
+      generator (numpy.random.Generator, optional)
 
     Returns:
       (Atilde, I) where
@@ -241,6 +254,8 @@ def Iwik(dW, h, n=5):
         I: array of shape (N, m, m) giving an m x m matrix of repeated Ito
         integral values for each of the N time intervals.
     """
+    if generator is None:
+        generator = np.random.default_rng()
     N = dW.shape[0]
     m = dW.shape[1]
     if dW.ndim < 3:
@@ -252,9 +267,9 @@ def Iwik(dW, h, n=5):
     Pm0 = _P(m)
     Km0 = _K(m)
     M = m*(m-1)//2
-    Atilde_n = _AtildeTerm(N, h, m, 1, dW, Km0, Pm0)
+    Atilde_n = _AtildeTerm(N, h, m, 1, dW, Km0, Pm0, generator)
     for k in range(2, n+1):
-        Atilde_n += _AtildeTerm(N, h, m, k, dW, Km0, Pm0)
+        Atilde_n += _AtildeTerm(N, h, m, k, dW, Km0, Pm0, generator)
     Atilde_n = (h/(2.0*np.pi))*Atilde_n # approximation after n terms
     S = _sigmainf(N, h, m, dW, Km0, Pm0)
     normdW2 = np.sum(np.abs(dW)**2, axis=1)
@@ -263,7 +278,7 @@ def Iwik(dW, h, n=5):
     Im = broadcast_to(np.eye(m), (N, m, m))
     Ims0 = np.eye(m**2)
     sqrtS = (S + 2.0*radical*IM)/(np.sqrt(2.0)*(1.0 + radical))
-    G = np.random.normal(0.0, 1.0, (N, M, 1))
+    G = generator.standard_normal((N, M, 1))
     tailsum = h/(2.0*np.pi)*_a(n)**0.5*_dot(sqrtS, G)
     Atilde = Atilde_n + tailsum # our final approximation of the areas
     factor3 = broadcast_to(np.dot(Ims0 - Pm0, Km0.T), (N, m**2, M))
@@ -273,7 +288,7 @@ def Iwik(dW, h, n=5):
     return (Atilde, I)
 
 
-def Jwik(dW, h, n=5):
+def Jwik(dW, h, n=5, generator=None):
     """matrix J approximating repeated Stratonovich integrals for each of N
     time intervals, using the method of Wiktorsson (2001).
 
@@ -282,6 +297,7 @@ def Jwik(dW, h, n=5):
         each time step N. (You can make this array using sdeint.deltaW())
       h (float): the time step size
       n (int, optional): how many terms to take in the series expansion
+      generator (numpy.random.Generator, optional)
 
     Returns:
       (Atilde, J) where
@@ -290,6 +306,6 @@ def Jwik(dW, h, n=5):
         Stratonovich integral values for each of the N time intervals.
     """
     m = dW.shape[1]
-    Atilde, I = Iwik(dW, h, n)
+    Atilde, I = Iwik(dW, h, n, generator)
     J = I + 0.5*h*np.eye(m).reshape((1, m, m))
     return (Atilde, J)
