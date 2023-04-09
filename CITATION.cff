@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: >-
+  The preferred citation for this work is the PhD thesis below,
+  where sdeint is documented in Appendix E.
+title: sdeint
+type: software
+repository-code: "https://github.com/mattja/sdeint"
+authors:
+  - family-names: Aburn
+    given-names: Matthew J.
+    orcid: "https://orcid.org/0000-0002-0363-2586"
+license: GPL-3.0+
+preferred-citation:
+  authors:
+    - family-names: Aburn
+      given-names: Matthew J.
+      orcid: "https://orcid.org/0000-0002-0363-2586"
+  title: "Critical fluctuations and coupling of stochastic neural mass models"
+  year: 2017
+  month: 1
+  type: thesis
+  thesis-type: "PhD thesis"
+  institution:
+    name: "The University of Queensland"
+  doi: 10.14264/uql.2017.148
